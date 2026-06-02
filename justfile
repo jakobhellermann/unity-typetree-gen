@@ -3,7 +3,7 @@ fixtures_dir := "fixtures/bin/Release/netstandard2.0"
 # Unity versions to snapshot against. Each gets its own tests/snapshots/<v>/
 # directory; the harness checks the generator against every one. Spanning an
 # old and a current version exercises the version-dependent template branches.
-unity_versions := "6000.0.0 2019.4.0 5.0.0"
+unity_versions := "6000.0.0f1 2019.4.0f1 5.0.0f1"
 
 _default:
 	just --list

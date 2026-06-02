@@ -2,16 +2,15 @@
 mod assembly;
 mod generator;
 mod template;
-mod version;
 
 pub use assembly::AssemblyTypeTreeGenerator;
+pub use rabex::UnityVersion;
 pub use rabex::typetree::TypeTreeNode;
-pub use version::UnityVersion;
 
 use template::TemplateField;
 
 /// Align flag set on a node whose value is 4-byte aligned after writing.
-pub const ALIGN_FLAG: i32 = 0x4000;
+const ALIGN_FLAG: i32 = 0x4000;
 
 /// Wrap a script's serialized fields in the `Base` root (type = the class name,
 /// level 0) and build the [`TypeTreeNode`] tree directly.

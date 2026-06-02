@@ -8,7 +8,7 @@
 //! is set explicitly here (matching the C# `align` arguments); the dynamically
 //! generated fields in [`crate::generator`] derive it from the value type via
 //! [`type_aligns_by_name`].
-use crate::version::UnityVersion;
+use rabex::UnityVersion;
 
 #[derive(Debug, Clone)]
 pub(crate) struct TemplateField {

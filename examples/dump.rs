@@ -19,7 +19,10 @@ fn main() {
     let args: Vec<String> = std::env::args().collect();
     let (managed_dir, version, assembly, full_name) = (&args[1], &args[2], &args[3], &args[4]);
 
-    let mut generator = AssemblyTypeTreeGenerator::new(version.clone());
+    let version = version
+        .parse()
+        .expect("invalid unity version (e.g. 6000.0.0f1)");
+    let mut generator = AssemblyTypeTreeGenerator::new(version);
     for entry in std::fs::read_dir(managed_dir).unwrap() {
         let path = entry.unwrap().path();
         if path.extension().is_some_and(|e| e == "dll") {

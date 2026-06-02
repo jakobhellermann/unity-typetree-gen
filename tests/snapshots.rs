@@ -49,7 +49,7 @@ const SNAPSHOTS: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/snapshots");
 
 /// Unity versions snapshotted under `tests/snapshots/<version>/`; kept in sync
 /// with `unity_versions` in the justfile.
-const VERSIONS: &[&str] = &["6000.0.0", "2019.4.0", "5.0.0"];
+const VERSIONS: &[&str] = &["6000.0.0f1", "2019.4.0f1", "5.0.0f1"];
 
 const FIXTURES: &[&str] = &[
     "Fixtures.Primitives",
@@ -110,10 +110,13 @@ fn read_dll(path: &str) -> Vec<u8> {
 /// that holds the real definitions (`UnityEngine.CoreModule.dll`) — mirroring a
 /// shipped game and exercising cross-assembly + type-forwarder resolution.
 fn new_generator(version: &str) -> AssemblyTypeTreeGenerator {
-    let mut generator = AssemblyTypeTreeGenerator::new(version);
-    generator.add_assembly("Fixtures.dll", read_dll(FIXTURES_DLL));
-    generator.add_assembly("UnityEngine.dll", read_dll(UNITY_DLL));
-    generator.add_assembly("UnityEngine.CoreModule.dll", read_dll(UNITY_CORE_DLL));
+    let mut generator = AssemblyTypeTreeGenerator::new(version.parse().unwrap());
+    generator.add_assembly("Fixtures.dll".to_string(), read_dll(FIXTURES_DLL));
+    generator.add_assembly("UnityEngine.dll".to_string(), read_dll(UNITY_DLL));
+    generator.add_assembly(
+        "UnityEngine.CoreModule.dll".to_string(),
+        read_dll(UNITY_CORE_DLL),
+    );
     generator
 }
 

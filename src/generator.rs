@@ -14,7 +14,6 @@
 //! propagates the argument into the base's fields.
 use crate::assembly::AssemblyTypeTreeGenerator;
 use crate::template::*;
-use crate::version::UnityVersion;
 use dotnetdll::prelude::Resolution;
 use dotnetdll::resolved::Accessibility as Access;
 use dotnetdll::resolved::attribute::Attribute;
@@ -23,6 +22,7 @@ use dotnetdll::resolved::types::{
     BaseType, Kind, MemberType, MethodType, ResolutionScope, TypeDefinition, TypeImplementation,
     TypeSource, UserType,
 };
+use rabex::UnityVersion;
 
 /// Base types at which inherited-field walking stops.
 const BASE_STOP: &[&str] = &[
@@ -96,12 +96,15 @@ fn effective(member: &'static MemberType, ctx: &TypeCtx) -> (&'static MemberType
 
 pub(crate) struct Generator<'r> {
     assemblies: &'r AssemblyTypeTreeGenerator,
-    version: UnityVersion,
+    version: &'r UnityVersion,
     using_managed_reference: bool,
 }
 
 impl<'r> Generator<'r> {
-    pub(crate) fn new(assemblies: &'r AssemblyTypeTreeGenerator, version: UnityVersion) -> Self {
+    pub(crate) fn new(
+        assemblies: &'r AssemblyTypeTreeGenerator,
+        version: &'r UnityVersion,
+    ) -> Self {
         Generator {
             assemblies,
             version,
@@ -127,10 +130,10 @@ impl<'r> Generator<'r> {
         let (res, def) = self.find_type_following_forwards(primary, namespace, type_name)?;
 
         let mut children = Vec::new();
-        let limit = self.version.serialization_limit();
+        let limit = serialization_limit(self.version);
         self.recursive_type_load(&TypeCtx::root(res), def, &mut children, limit, true);
         if self.using_managed_reference {
-            children.push(managed_references_registry("references", &self.version));
+            children.push(managed_references_registry("references", self.version));
         }
         Some(children)
     }
@@ -206,7 +209,7 @@ impl<'r> Generator<'r> {
                 name: field.name.to_string(),
                 aligned: type_aligns_by_name(&ty),
                 ty,
-                children: kind.into_children(&self.version),
+                children: kind.into_children(self.version),
             };
 
             if is_array_or_list {
@@ -258,7 +261,7 @@ impl<'r> Generator<'r> {
         let def = rt.def;
         let full_name = def.type_name();
         let children = if is_special_unity_type(&full_name) {
-            special_unity_children(&def.name, &self.version)
+            special_unity_children(&def.name, self.version)
                 .unwrap_or_else(|| self.serialized(rt, available_depth))
         } else if def.flags.serializable {
             self.serialized(rt, available_depth)
@@ -750,4 +753,17 @@ fn method_type_name(mt: &MethodType, res: &Resolution) -> Option<String> {
         });
     }
     None
+}
+
+/// Nesting depth at and beyond which collections are no longer serialized.
+fn serialization_limit(version: &UnityVersion) -> i32 {
+    if version.major > 2020
+        || (version.major == 2020
+            && (version.minor > 1 || (version.minor == 1 && version.build >= 4)))
+        || (version.major == 2019 && version.minor == 4 && version.build >= 9)
+    {
+        10
+    } else {
+        7
+    }
 }

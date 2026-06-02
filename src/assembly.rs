@@ -11,9 +11,10 @@ use std::sync::Mutex;
 
 use dotnetdll::prelude::{ReadOptions, Resolution};
 
+use rabex::UnityVersion;
+
 use crate::TypeTreeNode;
 use crate::generator::Generator;
-use crate::version::UnityVersion;
 
 /// A set of managed assemblies that can generate MonoBehaviour type trees for a
 /// fixed Unity version.
@@ -23,24 +24,24 @@ use crate::version::UnityVersion;
 pub struct AssemblyTypeTreeGenerator {
     bytes: HashMap<String, &'static [u8]>,
     resolutions: Mutex<HashMap<String, &'static Resolution<'static>>>,
-    unity_version: String,
+    unity_version: UnityVersion,
 }
 
 impl AssemblyTypeTreeGenerator {
-    pub fn new(unity_version: impl Into<String>) -> Self {
+    pub fn new(unity_version: UnityVersion) -> Self {
         AssemblyTypeTreeGenerator {
             bytes: HashMap::new(),
             resolutions: Mutex::new(HashMap::new()),
-            unity_version: unity_version.into(),
+            unity_version,
         }
     }
 
     /// Register an assembly's bytes under `assembly_name` (e.g.
     /// `Assembly-CSharp.dll`, matching `MonoScript::m_AssemblyName`). The bytes
     /// are not parsed until a type tree from this assembly is first requested.
-    pub fn add_assembly(&mut self, assembly_name: impl Into<String>, bytes: Vec<u8>) {
+    pub fn add_assembly(&mut self, assembly_name: String, bytes: Vec<u8>) {
         let leaked: &'static [u8] = Vec::leak(bytes);
-        self.bytes.insert(assembly_name.into(), leaked);
+        self.bytes.insert(assembly_name, leaked);
     }
 
     pub fn has_assembly(&self, assembly_name: &str) -> bool {
@@ -77,8 +78,8 @@ impl AssemblyTypeTreeGenerator {
         type_name: &str,
     ) -> Option<TypeTreeNode> {
         let primary = self.resolution(assembly_name)?;
-        let version = UnityVersion::parse(&self.unity_version);
-        let children = Generator::new(self, version).read(primary, namespace, type_name)?;
+        let children =
+            Generator::new(self, &self.unity_version).read(primary, namespace, type_name)?;
         Some(crate::assemble(children, type_name))
     }
 }
