@@ -25,12 +25,12 @@ fn main() {
     // Resolve assemblies lazily from the Managed directory: only the DLLs
     // actually referenced by the requested MonoBehaviour are read and parsed.
     let managed_dir = std::path::PathBuf::from(managed_dir);
-    let generator = AssemblyTypeTreeGenerator::new(version)
-        .with_loader(move |name| std::fs::read(managed_dir.join(name)).ok());
+    let generator = AssemblyTypeTreeGenerator::new(version);
 
     let (namespace, type_name) = full_name.rsplit_once('.').unwrap_or(("", full_name));
     let tree = generator
-        .generate(assembly, namespace, type_name)
+        .generate_from_dir(&managed_dir, assembly, namespace, type_name)
+        .expect("load error")
         .expect("assembly/class not found");
     print_tree(&tree);
 }

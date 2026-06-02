@@ -3,7 +3,7 @@ mod assembly;
 mod generator;
 mod template;
 
-pub use assembly::AssemblyTypeTreeGenerator;
+pub use assembly::{AssemblyTypeTreeGenerator, Loader};
 pub use rabex::UnityVersion;
 pub use rabex::typetree::TypeTreeNode;
 
