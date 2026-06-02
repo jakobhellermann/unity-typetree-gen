@@ -588,9 +588,15 @@ fn find_type(
     namespace: &str,
     type_name: &str,
 ) -> Option<&'static TypeDefinition<'static>> {
-    res.type_definitions
-        .iter()
-        .find(|td| td.name == type_name && td.namespace.as_deref().unwrap_or("") == namespace)
+    res.type_definitions.iter().find(|td| {
+        // Only top-level types: a nested type carries an empty namespace and its
+        // simple name in the metadata, so it would otherwise spuriously match a
+        // top-level lookup (e.g. a MonoScript recording `Inner` with no
+        // namespace) for an absent top-level type of the same name.
+        td.encloser.is_none()
+            && td.name == type_name
+            && td.namespace.as_deref().unwrap_or("") == namespace
+    })
 }
 
 /// Find a type named `name` nested directly inside `encloser` (within `res`).

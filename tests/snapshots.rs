@@ -136,6 +136,15 @@ fn missing_type_is_none() {
     assert_eq!(empty.len(), 1, "expected only the Base node, got {empty:?}");
 }
 
+/// `Inner` exists only as a *nested* type (`Fixtures.Outer/Inner`), not as a
+/// top-level type. A top-level lookup (as a MonoScript with no namespace records
+/// it) must not spuriously match the nested type — it should report not-found.
+#[test]
+fn nested_type_not_matched_as_top_level() {
+    let generator = new_generator(VERSIONS[0]);
+    assert_eq!(generator.generate("Fixtures.dll", "", "Inner"), None);
+}
+
 macro_rules! snapshot_tests {
     ($($name:ident => $full:literal),+ $(,)?) => {
         $(#[test] fn $name() { check($full); })+
