@@ -2,18 +2,30 @@
   <!-- Reference snapshots for the unity-typetree-gen tests: runs
        AssetsTools.NET's MonoCecilTempGenerator (the same logic the Rust
        generator ports) over a Managed dir and dumps each MonoBehaviour's
-       type tree as JSON. Pulled purely from nuget — no TypeTreeGeneratorAPI
-       clone, no submodules, no AOT. -->
+       type tree as JSON.
+
+       References the local AssetsTools.NET fork (override with
+       -p:AssetsToolsDir=/path) rather than the 3.0.4 NuGet packages: it carries
+       fixes (IntPtr/pointer fields, unresolvable types, multidimensional
+       arrays) the published packages lack, so the snapshots are a correct
+       reference. Falls back to NuGet if the fork isn't present. -->
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RollForward>Major</RollForward>
+    <AssetsToolsDir Condition="'$(AssetsToolsDir)' == ''">/home/jakob/dev/unity/AssetsTools.NET</AssetsToolsDir>
+    <UseAssetsToolsFork Condition="Exists('$(AssetsToolsDir)/AssetsTools.NET.MonoCecil/AssetsTools.NET.MonoCecil.csproj')">true</UseAssetsToolsFork>
   </PropertyGroup>
-  <ItemGroup>
+  <ItemGroup Condition="'$(UseAssetsToolsFork)' == 'true'">
+    <ProjectReference Include="$(AssetsToolsDir)/AssetsTools.NET.MonoCecil/AssetsTools.NET.MonoCecil.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(UseAssetsToolsFork)' != 'true'">
     <PackageReference Include="AssetsTools.NET.MonoCecil" Version="3.0.4" />
     <PackageReference Include="AssetsTools.NET" Version="3.0.4" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Mono.Cecil" Version="0.11.6" />
   </ItemGroup>
 </Project>

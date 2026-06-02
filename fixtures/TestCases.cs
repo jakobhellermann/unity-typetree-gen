@@ -98,6 +98,17 @@ namespace Fixtures
         public Vector3[] verts;
     }
 
+    // Unity does not serialize multidimensional arrays; only single-dimensional
+    // ones. `before`/`after` bracket them so an over-counted tree would desync.
+    public class MultidimArrays : MonoBehaviour
+    {
+        public int before;
+        public int[,] multiInt;
+        public float[,] multiFloat;
+        public int[] oneD;
+        public int after;
+    }
+
     public class Lists : MonoBehaviour
     {
         public List<int> ints;
