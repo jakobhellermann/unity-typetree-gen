@@ -11,7 +11,7 @@ use std::sync::Mutex;
 
 use dotnetdll::prelude::{ReadOptions, Resolution};
 
-use crate::Node;
+use crate::TypeTreeNode;
 use crate::generator::Generator;
 use crate::version::UnityVersion;
 
@@ -75,7 +75,7 @@ impl AssemblyTypeTreeGenerator {
         assembly_name: &str,
         namespace: &str,
         type_name: &str,
-    ) -> Option<Vec<Node>> {
+    ) -> Option<TypeTreeNode> {
         let primary = self.resolution(assembly_name)?;
         let version = UnityVersion::parse(&self.unity_version);
         let children = Generator::new(self, version).read(primary, namespace, type_name)?;

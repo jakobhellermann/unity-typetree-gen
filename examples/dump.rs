@@ -1,6 +1,19 @@
 // Dump the generated type tree for one MonoBehaviour as `<level> <type> <name> <metaflag>`.
 // usage: dump <managed-dir> <unity-version> <assembly.dll> <Namespace.Class>
-use unity_typetree_gen::AssemblyTypeTreeGenerator;
+use unity_typetree_gen::{AssemblyTypeTreeGenerator, TypeTreeNode};
+
+fn print_tree(node: &TypeTreeNode) {
+    println!(
+        "{} {} {} {}",
+        node.m_Level,
+        node.m_Type,
+        node.m_Name,
+        node.m_MetaFlag.unwrap_or(0)
+    );
+    for child in &node.children {
+        print_tree(child);
+    }
+}
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
@@ -16,13 +29,8 @@ fn main() {
     }
 
     let (namespace, type_name) = full_name.rsplit_once('.').unwrap_or(("", full_name));
-    let nodes = generator
+    let tree = generator
         .generate(assembly, namespace, type_name)
         .expect("assembly/class not found");
-    for node in &nodes {
-        println!(
-            "{} {} {} {}",
-            node.m_Level, node.m_Type, node.m_Name, node.m_MetaFlag
-        );
-    }
+    print_tree(&tree);
 }

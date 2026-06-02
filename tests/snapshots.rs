@@ -9,7 +9,35 @@ use std::fs;
 use std::path::Path;
 
 use serde::Deserialize;
-use unity_typetree_gen::{AssemblyTypeTreeGenerator, Node};
+use unity_typetree_gen::{AssemblyTypeTreeGenerator, TypeTreeNode};
+
+/// A flattened node, matching the snapshot JSON (the AssetsTools.NET reference),
+/// so a generated tree can be compared depth-first against it.
+#[derive(Debug, PartialEq, Eq)]
+#[allow(non_snake_case)]
+struct Node {
+    m_Type: String,
+    m_Name: String,
+    m_Level: u8,
+    m_MetaFlag: i32,
+}
+
+fn flatten(tree: &TypeTreeNode) -> Vec<Node> {
+    let mut out = Vec::new();
+    fn walk(node: &TypeTreeNode, out: &mut Vec<Node>) {
+        out.push(Node {
+            m_Type: node.m_Type.clone(),
+            m_Name: node.m_Name.clone(),
+            m_Level: node.m_Level,
+            m_MetaFlag: node.m_MetaFlag.unwrap_or(0),
+        });
+        for child in &node.children {
+            walk(child, out);
+        }
+    }
+    walk(tree, &mut out);
+    out
+}
 
 const FIXTURES_DLL: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/Fixtures.dll");
 const UNITY_DLL: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/UnityEngine.dll");
@@ -104,7 +132,11 @@ fn check_in(assembly: &str, full_name: &str) {
             .generate(assembly, namespace, type_name)
             .unwrap_or_else(|| panic!("generate {full_name} @ {version}"));
         let want = load_snapshot(version, full_name);
-        assert_eq!(got, want, "type tree mismatch for {full_name} @ {version}");
+        assert_eq!(
+            flatten(&got),
+            want,
+            "type tree mismatch for {full_name} @ {version}"
+        );
     }
 }
 
@@ -133,7 +165,10 @@ fn missing_type_is_none() {
     let empty = generator
         .generate("UnityEngine.CoreModule.dll", "UnityEngine", "MonoBehaviour")
         .expect("MonoBehaviour resolves");
-    assert_eq!(empty.len(), 1, "expected only the Base node, got {empty:?}");
+    assert!(
+        empty.children.is_empty(),
+        "expected only the Base node, got {empty:?}"
+    );
 }
 
 /// `Inner` exists only as a *nested* type (`Fixtures.Outer/Inner`), not as a
