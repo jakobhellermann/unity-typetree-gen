@@ -40,6 +40,16 @@ namespace UnityEngine
     public class AnimationCurve { }
     public class Gradient { }
 
+    // A struct with a nested enum, in a different assembly than the fixtures.
+    // A field typed `Navigation.Mode` is a cross-assembly reference to a *nested*
+    // type, which the generator must resolve via the enclosing type ref.
+    // (Mirrors UnityEngine.UI.Navigation.Mode.)
+    public struct Navigation
+    {
+        public enum Mode { Automatic, Horizontal, Vertical, None }
+        public Mode mode;
+    }
+
     // A type whose definition lives in this module assembly while UnityEngine.dll
     // forwards its name. A MonoScript pointing at
     // (assembly=UnityEngine.dll, class=ForwardedAsset) must follow the forwarder

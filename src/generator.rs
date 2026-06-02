@@ -474,15 +474,26 @@ impl<'r> Generator<'r> {
             UserType::Reference(idx) => {
                 let type_ref = &res[*idx];
                 let namespace = type_ref.namespace.as_deref().unwrap_or("");
-                let target = match &type_ref.scope {
+                match &type_ref.scope {
                     ResolutionScope::Assembly(assembly) => {
                         let name = format!("{}.dll", res[*assembly].name);
-                        self.assemblies.resolution(&name)?
+                        let target = self.assemblies.resolution(&name)?;
+                        self.find_type_following_forwards(target, namespace, &type_ref.name)
                     }
-                    ResolutionScope::CurrentModule => res,
-                    _ => return None,
-                };
-                self.find_type_following_forwards(target, namespace, &type_ref.name)
+                    ResolutionScope::CurrentModule => {
+                        self.find_type_following_forwards(res, namespace, &type_ref.name)
+                    }
+                    // A nested type (e.g. `Navigation/Mode`): resolve the
+                    // enclosing type ref, then find the nested definition by name
+                    // inside it (in the assembly the encloser lives in).
+                    ResolutionScope::Nested(encloser_ref) => {
+                        let encloser = UserType::Reference(*encloser_ref);
+                        let (encloser_res, encloser_def) = self.resolve_user(&encloser, res)?;
+                        find_nested_type(encloser_res, encloser_def, &type_ref.name)
+                            .map(|def| (encloser_res, def))
+                    }
+                    _ => None,
+                }
             }
         }
     }
@@ -574,6 +585,21 @@ fn find_type(
     res.type_definitions
         .iter()
         .find(|td| td.name == type_name && td.namespace.as_deref().unwrap_or("") == namespace)
+}
+
+/// Find a type named `name` nested directly inside `encloser` (within `res`).
+fn find_nested_type(
+    res: &'static Resolution<'static>,
+    encloser: &'static TypeDefinition<'static>,
+    name: &str,
+) -> Option<&'static TypeDefinition<'static>> {
+    let encloser_ptr = std::ptr::from_ref(encloser);
+    res.type_definitions.iter().find(|td| {
+        td.name == name
+            && td
+                .encloser
+                .is_some_and(|idx| std::ptr::from_ref(&res[idx]) == encloser_ptr)
+    })
 }
 
 fn source_type_name(ts: &TypeSource<MemberType>, res: &Resolution) -> String {

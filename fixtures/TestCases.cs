@@ -50,6 +50,14 @@ namespace Fixtures
         public string s;
     }
 
+    // A field whose type is an enum nested inside a struct in another assembly
+    // (UnityEngine.Navigation.Mode). Resolving it requires following the nested
+    // type's enclosing type reference across the assembly boundary.
+    public class NestedEnumField : MonoBehaviour
+    {
+        public Navigation.Mode mode;
+    }
+
     // PPtr: fields deriving from UnityEngine.Object.
     public class Pointers : MonoBehaviour
     {

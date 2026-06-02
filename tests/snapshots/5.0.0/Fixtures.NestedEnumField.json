@@ -1,0 +1,14 @@
+[
+  {
+    "m_Type": "NestedEnumField",
+    "m_Name": "Base",
+    "m_Level": 0,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "mode",
+    "m_Level": 1,
+    "m_MetaFlag": 0
+  }
+]

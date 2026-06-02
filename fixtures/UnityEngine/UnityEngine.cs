@@ -36,4 +36,5 @@ using System.Runtime.CompilerServices;
 [assembly: TypeForwardedTo(typeof(UnityEngine.RectOffset))]
 [assembly: TypeForwardedTo(typeof(UnityEngine.AnimationCurve))]
 [assembly: TypeForwardedTo(typeof(UnityEngine.Gradient))]
+[assembly: TypeForwardedTo(typeof(UnityEngine.Navigation))]
 [assembly: TypeForwardedTo(typeof(UnityEngine.ForwardedAsset))]
