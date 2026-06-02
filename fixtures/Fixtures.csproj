@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- Test fixtures for unity-typetree-gen. Self-contained: the
-       UnityEngine stubs live in this assembly too, so building needs
-       no real Unity references and the produced DLL resolves on its
-       own. One class per type-tree test case. -->
+  <!-- Test fixtures for unity-typetree-gen. The UnityEngine stubs live in a
+       separate referenced assembly, so their types are cross-assembly
+       references — matching real games and exercising the generator's
+       cross-assembly resolution. One class per type-tree test case. -->
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Nullable>disable</Nullable>
@@ -10,5 +10,10 @@
     <AssemblyName>Fixtures</AssemblyName>
     <Deterministic>true</Deterministic>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="TestCases.cs" />
+    <ProjectReference Include="UnityEngine/UnityEngine.csproj" />
+  </ItemGroup>
 </Project>

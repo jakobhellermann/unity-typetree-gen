@@ -7,14 +7,15 @@ using Mono.Cecil;
 // Writes <out-dir>/<Namespace>.<Name>.json — the AssetsTools.NET type
 // tree (a "Base" root + the script fields) for every MonoBehaviour in
 // the managed dir, flattened to {m_Type, m_Name, m_Level, m_MetaFlag}.
-if (args.Length != 3)
+if (args.Length is not (3 or 4))
 {
-    Console.Error.WriteLine("usage: snapshot-gen <managed-dir> <unity-version> <out-dir>");
+    Console.Error.WriteLine("usage: snapshot-gen <managed-dir> <unity-version> <out-dir> [only-full-name]");
     return 1;
 }
 string managedDir = args[0];
 var unityVersion = new UnityVersion(args[1]);
 string outDir = args[2];
+string? onlyFullName = args.Length == 4 ? args[3] : null;
 Directory.CreateDirectory(outDir);
 
 var resolver = new DefaultAssemblyResolver();
@@ -37,6 +38,9 @@ foreach (string dllPath in Directory.GetFiles(managedDir, "*.dll"))
             continue;
 
         string ns = type.Namespace ?? "";
+        string fullNameEarly = ns.Length == 0 ? type.Name : $"{ns}.{type.Name}";
+        if (onlyFullName != null && fullNameEarly != onlyFullName)
+            continue;
         List<AssetTypeTemplateField> fields = generator.Read(dllPath, ns, type.Name, unityVersion);
 
         var baseField = new AssetTypeTemplateField

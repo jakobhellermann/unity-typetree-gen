@@ -11,7 +11,9 @@ use std::sync::Mutex;
 
 use dotnetdll::prelude::{ReadOptions, Resolution};
 
-use crate::{Node, generate};
+use crate::Node;
+use crate::generator::Generator;
+use crate::version::UnityVersion;
 
 /// A set of managed assemblies that can generate MonoBehaviour type trees for a
 /// fixed Unity version.
@@ -47,7 +49,7 @@ impl AssemblyTypeTreeGenerator {
 
     /// Parsed resolution for `assembly_name`, parsing (and caching) it on first
     /// access. `None` if the assembly is unknown or fails to parse.
-    fn resolution(&self, assembly_name: &str) -> Option<&'static Resolution<'static>> {
+    pub(crate) fn resolution(&self, assembly_name: &str) -> Option<&'static Resolution<'static>> {
         let mut resolutions = self.resolutions.lock().unwrap();
         if let Some(resolution) = resolutions.get(assembly_name) {
             return Some(resolution);
@@ -66,18 +68,17 @@ impl AssemblyTypeTreeGenerator {
 
     /// Generate the flattened type tree for `namespace.type_name` defined in
     /// `assembly_name`, or `None` if that assembly is unknown / unparseable.
+    /// Field types defined in other registered assemblies are resolved across
+    /// assemblies (parsed on demand).
     pub fn generate(
         &self,
         assembly_name: &str,
         namespace: &str,
         type_name: &str,
     ) -> Option<Vec<Node>> {
-        let resolution = self.resolution(assembly_name)?;
-        Some(generate(
-            resolution,
-            namespace,
-            type_name,
-            &self.unity_version,
-        ))
+        let primary = self.resolution(assembly_name)?;
+        let version = UnityVersion::parse(&self.unity_version);
+        let children = Generator::new(self, version).read(primary, namespace, type_name);
+        Some(crate::assemble(children, type_name))
     }
 }

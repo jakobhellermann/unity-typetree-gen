@@ -153,4 +153,17 @@ namespace Fixtures
         [SerializeReference] public IPayload single;
         [SerializeReference] public List<IPayload> many;
     }
+
+    public class CustomData : ScriptableObject
+    {
+        public int amount;
+    }
+
+    // Fields whose type derives from UnityEngine.Object via a base class in
+    // another assembly must still serialize as PPtr (cross-assembly base walk).
+    public class ScriptableRefs : MonoBehaviour
+    {
+        public CustomData data;
+        public CustomData[] many;
+    }
 }

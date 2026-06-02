@@ -1,0 +1,62 @@
+[
+  {
+    "m_Type": "ScriptableRefs",
+    "m_Name": "Base",
+    "m_Level": 0,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "PPtr\u003C$CustomData\u003E",
+    "m_Name": "data",
+    "m_Level": 1,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "m_FileID",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "SInt64",
+    "m_Name": "m_PathID",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "vector",
+    "m_Name": "many",
+    "m_Level": 1,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "Array",
+    "m_Name": "Array",
+    "m_Level": 2,
+    "m_MetaFlag": 16384
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "size",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "PPtr\u003C$CustomData\u003E",
+    "m_Name": "data",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "m_FileID",
+    "m_Level": 4,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "SInt64",
+    "m_Name": "m_PathID",
+    "m_Level": 4,
+    "m_MetaFlag": 0
+  }
+]

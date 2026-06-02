@@ -8,11 +8,11 @@
 use std::fs;
 use std::path::Path;
 
-use dotnetdll::prelude::{ReadOptions, Resolution};
 use serde::Deserialize;
-use unity_typetree_gen::{Node, generate};
+use unity_typetree_gen::{AssemblyTypeTreeGenerator, Node};
 
-const DLL: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/Fixtures.dll");
+const FIXTURES_DLL: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/Fixtures.dll");
+const UNITY_DLL: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/UnityEngine.dll");
 const SNAPSHOTS: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/snapshots");
 
 /// Unity versions snapshotted under `tests/snapshots/<version>/`; kept in sync
@@ -31,6 +31,7 @@ const FIXTURES: &[&str] = &[
     "Fixtures.FieldVisibility",
     "Fixtures.Inheritance",
     "Fixtures.ManagedRefs",
+    "Fixtures.ScriptableRefs",
 ];
 
 #[derive(Debug, Deserialize, PartialEq, Eq)]
@@ -58,13 +59,23 @@ fn load_snapshot(version: &str, full_name: &str) -> Vec<Node> {
         .collect()
 }
 
+fn read_dll(path: &str) -> Vec<u8> {
+    fs::read(path).unwrap_or_else(|e| panic!("read {path}: {e} (run `just regen`)"))
+}
+
 fn check(full_name: &str) {
-    let bytes = fs::read(DLL).unwrap_or_else(|e| panic!("read {DLL}: {e} (run `just regen`)"));
-    let resolution = Resolution::parse(&bytes, ReadOptions::default()).expect("parse Fixtures.dll");
     let (namespace, type_name) = full_name.rsplit_once('.').unwrap_or(("", full_name));
 
     for version in VERSIONS {
-        let got = generate(&resolution, namespace, type_name, version);
+        // The UnityEngine stubs are a separate assembly, so its types are
+        // cross-assembly references the generator must resolve.
+        let mut generator = AssemblyTypeTreeGenerator::new(*version);
+        generator.add_assembly("Fixtures.dll", read_dll(FIXTURES_DLL));
+        generator.add_assembly("UnityEngine.dll", read_dll(UNITY_DLL));
+
+        let got = generator
+            .generate("Fixtures.dll", namespace, type_name)
+            .unwrap_or_else(|| panic!("generate {full_name} @ {version}"));
         let want = load_snapshot(version, full_name);
         assert_eq!(got, want, "type tree mismatch for {full_name} @ {version}");
     }
@@ -88,6 +99,7 @@ snapshot_tests! {
     field_visibility => "Fixtures.FieldVisibility",
     inheritance => "Fixtures.Inheritance",
     managed_refs => "Fixtures.ManagedRefs",
+    scriptable_refs => "Fixtures.ScriptableRefs",
 }
 
 /// Every committed snapshot must have a corresponding fixture test above (per

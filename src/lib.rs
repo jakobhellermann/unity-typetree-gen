@@ -1,6 +1,4 @@
 // TODO(ai-review): review for style and correctness
-use dotnetdll::prelude::Resolution;
-
 mod assembly;
 mod generator;
 mod template;
@@ -25,19 +23,9 @@ pub struct Node {
 /// Align flag set on a node whose value is 4-byte aligned after writing.
 pub const ALIGN_FLAG: i32 = 0x4000;
 
-/// Generate the flattened type tree for the MonoBehaviour `namespace.type_name`
-/// defined in `resolution`, as Unity would embed it for `unity_version`.
-///
-/// The result starts with the `Base` root (type = the class name, level 0),
-/// followed by the serialized fields in depth order.
-pub fn generate(
-    resolution: &Resolution,
-    namespace: &str,
-    type_name: &str,
-    unity_version: &str,
-) -> Vec<Node> {
-    let version = UnityVersion::parse(unity_version);
-    let children = generator::Generator::read(resolution, namespace, type_name, version);
+/// Wrap a script's serialized fields in the `Base` root (type = the class name,
+/// level 0) and flatten the tree to the depth-ordered node list.
+pub(crate) fn assemble(children: Vec<TemplateField>, type_name: &str) -> Vec<Node> {
     let base = TemplateField {
         name: "Base".to_string(),
         ty: type_name.to_string(),
