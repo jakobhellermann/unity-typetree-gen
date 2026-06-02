@@ -5,9 +5,16 @@
 //! Field types are resolved across assemblies: a reference to e.g.
 //! `UnityEngine.Object` or a special Unity type is looked up in the assembly
 //! that defines it (parsed on demand by the [`AssemblyTypeTreeGenerator`]),
-//! exactly as Cecil's assembly resolver does. Closed generics are handled only
-//! for `List<T>`; open generic type parameters used as field types are not
-//! solidified.
+//! exactly as Cecil's assembly resolver does. Open generic type parameters
+//! (`T`) are solidified to their concrete arguments via [`TypeCtx`].
+//!
+//! Known gaps (not hit by anything tested so far):
+//! - A type argument that is itself a collection (`Holder<int[]>`) is not
+//!   re-unwrapped — array/list detection only looks at the field's syntactic
+//!   type, not the substituted one.
+//! - A generic base class binding its own parameters (`Derived<T> : Base<T>`)
+//!   does not propagate `T` into the base's fields.
+//! - Nested types referenced via `/` in a type name are not resolved.
 use crate::assembly::AssemblyTypeTreeGenerator;
 use crate::template::*;
 use crate::version::UnityVersion;
