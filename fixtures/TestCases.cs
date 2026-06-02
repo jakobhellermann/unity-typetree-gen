@@ -25,14 +25,24 @@ namespace Fixtures
     }
 
     public enum ByteEnum : byte { A, B }
+    public enum SByteEnum : sbyte { A, B }
+    public enum ShortEnum : short { A, B }
+    public enum UShortEnum : ushort { A, B }
     public enum IntEnum { A, B }
-    public enum LongEnum : long { A, B } // not serializable → must be skipped
+    public enum UIntEnum : uint { A, B }
+    public enum LongEnum : long { A, B }    // Int64 → not serializable, must be skipped
+    public enum ULongEnum : ulong { A, B }  // UInt64 → not serializable, must be skipped
 
     public class Enums : MonoBehaviour
     {
         public ByteEnum be;
+        public SByteEnum sbe;
+        public ShortEnum she;
+        public UShortEnum ushe;
         public IntEnum ie;
+        public UIntEnum uie;
         public LongEnum le;
+        public ULongEnum ule;
     }
 
     public class Strings : MonoBehaviour
@@ -125,5 +135,22 @@ namespace Fixtures
     public class Inheritance : Primitives
     {
         public int extra;
+    }
+
+    public interface IPayload { }
+
+    [Serializable]
+    public class Payload : IPayload
+    {
+        public int amount;
+        public string label;
+    }
+
+    // [SerializeReference] fields serialize as `managedReference` and append a
+    // `references` ManagedReferencesRegistry to the type.
+    public class ManagedRefs : MonoBehaviour
+    {
+        [SerializeReference] public IPayload single;
+        [SerializeReference] public List<IPayload> many;
     }
 }

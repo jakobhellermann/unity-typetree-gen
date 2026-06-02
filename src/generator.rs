@@ -110,10 +110,9 @@ impl<'a, 'r> Generator<'a, 'r> {
             };
 
             if is_array_or_list {
-                // AssetsTools.NET 1.0.1 wraps only primitive and PPtr element
-                // arrays as a bare `vector`; everything else (string included)
-                // keeps the element type via VectorWithType.
-                node = if class.primitive || class.derives_ueobject {
+                // Primitive, string and PPtr element arrays become a bare
+                // `vector`; everything else keeps the element type name.
+                node = if class.primitive || class.string || class.derives_ueobject {
                     vector(node)
                 } else {
                     vector_with_type(node)
@@ -137,6 +136,7 @@ impl<'a, 'r> Generator<'a, 'r> {
             return Classified {
                 ty: "string".to_string(),
                 primitive: false,
+                string: true,
                 derives_ueobject: false,
                 children: string_children(),
             };
@@ -156,6 +156,7 @@ impl<'a, 'r> Generator<'a, 'r> {
             return Classified {
                 ty,
                 primitive: false,
+                string: false,
                 derives_ueobject: true,
                 children: pptr_children(&self.version),
             };
@@ -165,6 +166,7 @@ impl<'a, 'r> Generator<'a, 'r> {
             return Classified {
                 ty: "managedReference".to_string(),
                 primitive: false,
+                string: false,
                 derives_ueobject: false,
                 children: managed_reference_children(&self.version),
             };
@@ -183,6 +185,7 @@ impl<'a, 'r> Generator<'a, 'r> {
         Classified {
             ty,
             primitive: false,
+            string: false,
             derives_ueobject: false,
             children,
         }
@@ -378,6 +381,7 @@ impl<'a, 'r> Generator<'a, 'r> {
 struct Classified {
     ty: String,
     primitive: bool,
+    string: bool,
     derives_ueobject: bool,
     children: Vec<TemplateField>,
 }
@@ -387,6 +391,7 @@ impl Classified {
         Classified {
             ty,
             primitive,
+            string: false,
             derives_ueobject,
             children: Vec::new(),
         }

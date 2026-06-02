@@ -1,0 +1,86 @@
+[
+  {
+    "m_Type": "Inheritance",
+    "m_Name": "Base",
+    "m_Level": 0,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "UInt8",
+    "m_Name": "b",
+    "m_Level": 1,
+    "m_MetaFlag": 16384
+  },
+  {
+    "m_Type": "UInt8",
+    "m_Name": "u8",
+    "m_Level": 1,
+    "m_MetaFlag": 16384
+  },
+  {
+    "m_Type": "SInt8",
+    "m_Name": "i8",
+    "m_Level": 1,
+    "m_MetaFlag": 16384
+  },
+  {
+    "m_Type": "SInt16",
+    "m_Name": "i16",
+    "m_Level": 1,
+    "m_MetaFlag": 16384
+  },
+  {
+    "m_Type": "UInt16",
+    "m_Name": "u16",
+    "m_Level": 1,
+    "m_MetaFlag": 16384
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "i32",
+    "m_Level": 1,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "unsigned int",
+    "m_Name": "u32",
+    "m_Level": 1,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "SInt64",
+    "m_Name": "i64",
+    "m_Level": 1,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "UInt64",
+    "m_Name": "u64",
+    "m_Level": 1,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "f32",
+    "m_Level": 1,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "double",
+    "m_Name": "f64",
+    "m_Level": 1,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "UInt16",
+    "m_Name": "c",
+    "m_Level": 1,
+    "m_MetaFlag": 16384
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "extra",
+    "m_Level": 1,
+    "m_MetaFlag": 0
+  }
+]

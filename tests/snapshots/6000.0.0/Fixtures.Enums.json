@@ -1,0 +1,44 @@
+[
+  {
+    "m_Type": "Enums",
+    "m_Name": "Base",
+    "m_Level": 0,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "UInt8",
+    "m_Name": "be",
+    "m_Level": 1,
+    "m_MetaFlag": 16384
+  },
+  {
+    "m_Type": "SInt8",
+    "m_Name": "sbe",
+    "m_Level": 1,
+    "m_MetaFlag": 16384
+  },
+  {
+    "m_Type": "SInt16",
+    "m_Name": "she",
+    "m_Level": 1,
+    "m_MetaFlag": 16384
+  },
+  {
+    "m_Type": "UInt16",
+    "m_Name": "ushe",
+    "m_Level": 1,
+    "m_MetaFlag": 16384
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "ie",
+    "m_Level": 1,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "unsigned int",
+    "m_Name": "uie",
+    "m_Level": 1,
+    "m_MetaFlag": 0
+  }
+]
