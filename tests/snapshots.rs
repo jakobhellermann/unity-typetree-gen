@@ -105,19 +105,22 @@ fn read_dll(path: &str) -> Vec<u8> {
     fs::read(path).unwrap_or_else(|e| panic!("read {path}: {e} (run `just regen`)"))
 }
 
-/// Registers all fixture assemblies. The UnityEngine stubs are split into a
+fn new_generator(version: &str) -> AssemblyTypeTreeGenerator {
+    AssemblyTypeTreeGenerator::new(version.parse().unwrap())
+}
+
+/// Loader over the fixture assemblies. The UnityEngine stubs are split into a
 /// facade (`UnityEngine.dll`, only `[TypeForwardedTo]` entries) and the module
 /// that holds the real definitions (`UnityEngine.CoreModule.dll`) — mirroring a
 /// shipped game and exercising cross-assembly + type-forwarder resolution.
-fn new_generator(version: &str) -> AssemblyTypeTreeGenerator {
-    let mut generator = AssemblyTypeTreeGenerator::new(version.parse().unwrap());
-    generator.add_assembly("Fixtures.dll".to_string(), read_dll(FIXTURES_DLL));
-    generator.add_assembly("UnityEngine.dll".to_string(), read_dll(UNITY_DLL));
-    generator.add_assembly(
-        "UnityEngine.CoreModule.dll".to_string(),
-        read_dll(UNITY_CORE_DLL),
-    );
-    generator
+fn fixture_loader(name: &str) -> Result<Vec<u8>, std::io::Error> {
+    let path = match name {
+        "Fixtures.dll" => FIXTURES_DLL,
+        "UnityEngine.dll" => UNITY_DLL,
+        "UnityEngine.CoreModule.dll" => UNITY_CORE_DLL,
+        _ => return Err(std::io::Error::from(std::io::ErrorKind::NotFound)),
+    };
+    Ok(read_dll(path))
 }
 
 fn check(full_name: &str) {
@@ -132,7 +135,8 @@ fn check_in(assembly: &str, full_name: &str) {
     for version in VERSIONS {
         let generator = new_generator(version);
         let got = generator
-            .generate(assembly, namespace, type_name)
+            .generate(&fixture_loader, assembly, namespace, type_name)
+            .expect("load error")
             .unwrap_or_else(|| panic!("generate {full_name} @ {version}"));
         let want = load_snapshot(version, full_name);
         assert_eq!(
@@ -161,12 +165,20 @@ fn type_forwarder() {
 fn missing_type_is_none() {
     let generator = new_generator(VERSIONS[0]);
     assert_eq!(
-        generator.generate("Fixtures.dll", "Fixtures", "NoSuchType"),
+        generator
+            .generate(&fixture_loader, "Fixtures.dll", "Fixtures", "NoSuchType")
+            .expect("load error"),
         None,
     );
     // A real, field-less MonoBehaviour still resolves (Some, just the Base node).
     let empty = generator
-        .generate("UnityEngine.CoreModule.dll", "UnityEngine", "MonoBehaviour")
+        .generate(
+            &fixture_loader,
+            "UnityEngine.CoreModule.dll",
+            "UnityEngine",
+            "MonoBehaviour",
+        )
+        .expect("load error")
         .expect("MonoBehaviour resolves");
     assert!(
         empty.children.is_empty(),
@@ -180,7 +192,12 @@ fn missing_type_is_none() {
 #[test]
 fn nested_type_not_matched_as_top_level() {
     let generator = new_generator(VERSIONS[0]);
-    assert_eq!(generator.generate("Fixtures.dll", "", "Inner"), None);
+    assert_eq!(
+        generator
+            .generate(&fixture_loader, "Fixtures.dll", "", "Inner")
+            .expect("load error"),
+        None
+    );
 }
 
 /// A loader resolves assembly bytes lazily by name, and only for the assemblies
@@ -190,30 +207,28 @@ fn nested_type_not_matched_as_top_level() {
 fn lazy_loader_only_loads_what_is_used() {
     use std::cell::RefCell;
 
-    let loaded = std::rc::Rc::new(RefCell::new(Vec::new()));
-    let recorder = loaded.clone();
-    let generator = AssemblyTypeTreeGenerator::new(VERSIONS[0].parse().unwrap()).with_loader(
-        move |name| {
-            recorder.borrow_mut().push(name.to_string());
-            match name {
-                "Fixtures.dll" => Some(read_dll(FIXTURES_DLL)),
-                "UnityEngine.dll" => Some(read_dll(UNITY_DLL)),
-                "UnityEngine.CoreModule.dll" => Some(read_dll(UNITY_CORE_DLL)),
-                _ => None,
-            }
-        },
-    );
+    let loaded = RefCell::new(Vec::new());
+    let loader = |name: &str| -> Result<Vec<u8>, std::io::Error> {
+        loaded.borrow_mut().push(name.to_string());
+        fixture_loader(name)
+    };
+    let generator = AssemblyTypeTreeGenerator::new(VERSIONS[0].parse().unwrap());
 
     // Primitives reference only built-in types, so only Fixtures.dll loads.
     let got = generator
-        .generate("Fixtures.dll", "Fixtures", "Primitives")
+        .generate(&loader, "Fixtures.dll", "Fixtures", "Primitives")
+        .expect("load error")
         .expect("generate Primitives");
-    assert_eq!(flatten(&got), load_snapshot(VERSIONS[0], "Fixtures.Primitives"));
+    assert_eq!(
+        flatten(&got),
+        load_snapshot(VERSIONS[0], "Fixtures.Primitives")
+    );
     assert_eq!(*loaded.borrow(), vec!["Fixtures.dll".to_string()]);
 
     // A second lookup in the same assembly does not re-invoke the loader.
     generator
-        .generate("Fixtures.dll", "Fixtures", "Enums")
+        .generate(&loader, "Fixtures.dll", "Fixtures", "Enums")
+        .expect("load error")
         .expect("generate Enums");
     assert_eq!(*loaded.borrow(), vec!["Fixtures.dll".to_string()]);
 }
