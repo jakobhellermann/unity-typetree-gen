@@ -39,6 +39,9 @@ namespace UnityEngine
     public class RectOffset { public int left, right, top, bottom; }
     public class AnimationCurve { }
     public class Gradient { }
+    // A special Unity type with a hardcoded template (not generated from its
+    // real fields); the generator must emit the GUIStyle template subtree.
+    public class GUIStyle { public int unused; }
 
     // A struct with a nested enum, in a different assembly than the fixtures.
     // A field typed `Navigation.Mode` is a cross-assembly reference to a *nested*

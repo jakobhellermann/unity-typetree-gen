@@ -267,6 +267,107 @@ fn rgbaf(name: &str) -> TemplateField {
     )
 }
 
+fn bool_f(name: &str, align: bool) -> TemplateField {
+    leaf(name, "bool", align)
+}
+
+fn vector2f(name: &str) -> TemplateField {
+    node(name, "Vector2f", false, vec![float_f("x"), float_f("y")])
+}
+
+fn rect_offset(name: &str) -> TemplateField {
+    node(
+        name,
+        "RectOffset",
+        false,
+        vec![
+            int_f("m_Left"),
+            int_f("m_Right"),
+            int_f("m_Top"),
+            int_f("m_Bottom"),
+        ],
+    )
+}
+
+fn pptr_field(name: &str, type_name: &str, version: &UnityVersion) -> TemplateField {
+    node(
+        name,
+        &format!("PPtr<{type_name}>"),
+        false,
+        pptr_children(version),
+    )
+}
+
+/// `GUIStyleState` = a background PPtr + a text color.
+fn gui_style_state(name: &str, version: &UnityVersion) -> TemplateField {
+    node(
+        name,
+        "GUIStyleState",
+        false,
+        vec![
+            pptr_field("m_Background", "Texture2D", version),
+            rgbaf("m_TextColor"),
+        ],
+    )
+}
+
+/// `GUIStyle`'s fields, mirroring `CommonMonoTemplateHelper.GUIStyle`. The field
+/// order and a few alignment flags differ between Unity 3 and 4+.
+fn gui_style_children(version: &UnityVersion) -> Vec<TemplateField> {
+    let v4 = version.major >= 4;
+    let mut out = vec![
+        string_field("m_Name"),
+        gui_style_state("m_Normal", version),
+        gui_style_state("m_Hover", version),
+        gui_style_state("m_Active", version),
+        gui_style_state("m_Focused", version),
+        gui_style_state("m_OnNormal", version),
+        gui_style_state("m_OnHover", version),
+        gui_style_state("m_OnActive", version),
+        gui_style_state("m_OnFocused", version),
+        rect_offset("m_Border"),
+    ];
+    if v4 {
+        out.push(rect_offset("m_Margin"));
+        out.push(rect_offset("m_Padding"));
+    } else {
+        out.push(rect_offset("m_Padding"));
+        out.push(rect_offset("m_Margin"));
+    }
+    out.push(rect_offset("m_Overflow"));
+    out.push(pptr_field("m_Font", "Font", version));
+    if v4 {
+        out.push(int_f("m_FontSize"));
+        out.push(int_f("m_FontStyle"));
+        out.push(int_f("m_Alignment"));
+        out.push(bool_f("m_WordWrap", false));
+        out.push(bool_f("m_RichText", true));
+    } else {
+        out.push(int_f("m_ImagePosition"));
+        out.push(int_f("m_Alignment"));
+        out.push(bool_f("m_WordWrap", true));
+    }
+    out.push(int_f("m_TextClipping"));
+    if v4 {
+        out.push(int_f("m_ImagePosition"));
+    }
+    out.push(vector2f("m_ContentOffset"));
+    if !v4 {
+        out.push(vector2f("m_ClipOffset"));
+    }
+    out.push(float_f("m_FixedWidth"));
+    out.push(float_f("m_FixedHeight"));
+    if v4 {
+        out.push(bool_f("m_StretchWidth", false));
+    } else {
+        out.push(int_f("m_FontSize"));
+        out.push(int_f("m_FontStyle"));
+        out.push(bool_f("m_StretchWidth", true));
+    }
+    out.push(bool_f("m_StretchHeight", true));
+    out
+}
+
 fn keyframe(name: &str, version: &UnityVersion) -> TemplateField {
     let mut fields = vec![
         float_f("time"),
@@ -351,6 +452,7 @@ pub(crate) fn special_unity_children(
         "Vector2Int" => vec![int_f("x"), int_f("y")],
         "Vector3Int" => vec![int_f("x"), int_f("y"), int_f("z")],
         "PropertyName" => vec![string_field("id")],
+        "GUIStyle" => gui_style_children(version),
         _ => return None,
     })
 }

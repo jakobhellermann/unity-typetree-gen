@@ -86,6 +86,7 @@ namespace Fixtures
         public RectOffset rectOffset;
         public AnimationCurve curve;
         public Gradient gradient;
+        public GUIStyle guiStyle;
     }
 
     public class Arrays : MonoBehaviour
