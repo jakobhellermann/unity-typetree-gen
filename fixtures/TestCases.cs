@@ -182,4 +182,54 @@ namespace Fixtures
         public CustomData data;
         public CustomData[] many;
     }
+
+    // Gap 1: a type argument that is itself a collection. The `value` field of
+    // Holder<int[]> / Holder<List<int>> must be unwrapped to a vector after the
+    // open parameter T is substituted to the concrete (collection) argument.
+    public class GenericCollectionArg : MonoBehaviour
+    {
+        public Holder<int[]> arr;
+        public Holder<List<int>> list;
+    }
+
+    [Serializable]
+    public class Base<T>
+    {
+        public T base_value;
+        public int base_tag;
+    }
+
+    [Serializable]
+    public class Derived<T> : Base<T>
+    {
+        public T derived_value;
+    }
+
+    // Gap 2: a generic base class binding its own parameter (Derived<T> : Base<T>).
+    // The substitution T->float must propagate into Base's `base_value` field.
+    public class GenericInheritance : MonoBehaviour
+    {
+        public Derived<float> d;
+    }
+
+    [Serializable]
+    public class Outer
+    {
+        [Serializable]
+        public class Inner
+        {
+            public int x;
+            public float y;
+        }
+
+        public Inner inner;
+        public int tag;
+    }
+
+    // Gap 3: a nested type referenced via `Outer/Inner` in metadata. The field
+    // `inner` must resolve to the nested definition and read its fields.
+    public class NestedTypes : MonoBehaviour
+    {
+        public Outer outer;
+    }
 }

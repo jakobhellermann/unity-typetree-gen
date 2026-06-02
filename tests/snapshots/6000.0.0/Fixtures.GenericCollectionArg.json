@@ -1,0 +1,80 @@
+[
+  {
+    "m_Type": "GenericCollectionArg",
+    "m_Name": "Base",
+    "m_Level": 0,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "Holder\u00601",
+    "m_Name": "arr",
+    "m_Level": 1,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "vector",
+    "m_Name": "value",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "Array",
+    "m_Name": "Array",
+    "m_Level": 3,
+    "m_MetaFlag": 16384
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "size",
+    "m_Level": 4,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "data",
+    "m_Level": 4,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "tag",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "Holder\u00601",
+    "m_Name": "list",
+    "m_Level": 1,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "vector",
+    "m_Name": "value",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "Array",
+    "m_Name": "Array",
+    "m_Level": 3,
+    "m_MetaFlag": 16384
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "size",
+    "m_Level": 4,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "data",
+    "m_Level": 4,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "tag",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  }
+]

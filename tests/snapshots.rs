@@ -33,6 +33,9 @@ const FIXTURES: &[&str] = &[
     "Fixtures.ManagedRefs",
     "Fixtures.ScriptableRefs",
     "Fixtures.Generics",
+    "Fixtures.GenericCollectionArg",
+    "Fixtures.GenericInheritance",
+    "Fixtures.NestedTypes",
 ];
 
 #[derive(Debug, Deserialize, PartialEq, Eq)]
@@ -102,6 +105,9 @@ snapshot_tests! {
     managed_refs => "Fixtures.ManagedRefs",
     scriptable_refs => "Fixtures.ScriptableRefs",
     generics => "Fixtures.Generics",
+    generic_collection_arg => "Fixtures.GenericCollectionArg",
+    generic_inheritance => "Fixtures.GenericInheritance",
+    nested_types => "Fixtures.NestedTypes",
 }
 
 /// Every committed snapshot must have a corresponding fixture test above (per

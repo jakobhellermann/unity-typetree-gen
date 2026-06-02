@@ -1,20 +1,17 @@
-// TODO(ai-review): review for style and correctness
 //! Port of AssetsTools.NET `MonoCecilTempGenerator`, reading .NET metadata via
 //! dotnetdll instead of Mono.Cecil.
 //!
 //! Field types are resolved across assemblies: a reference to e.g.
 //! `UnityEngine.Object` or a special Unity type is looked up in the assembly
 //! that defines it (parsed on demand by the [`AssemblyTypeTreeGenerator`]),
-//! exactly as Cecil's assembly resolver does. Open generic type parameters
-//! (`T`) are solidified to their concrete arguments via [`TypeCtx`].
+//! exactly as Cecil's assembly resolver does.
 //!
-//! Known gaps (not hit by anything tested so far):
-//! - A type argument that is itself a collection (`Holder<int[]>`) is not
-//!   re-unwrapped — array/list detection only looks at the field's syntactic
-//!   type, not the substituted one.
-//! - A generic base class binding its own parameters (`Derived<T> : Base<T>`)
-//!   does not propagate `T` into the base's fields.
-//! - Nested types referenced via `/` in a type name are not resolved.
+//! Open generic type parameters (`T`) are solidified to their concrete
+//! arguments via [`TypeCtx`], which is a recursive substitution environment:
+//! each bound argument carries its own context, so a parameter is substituted
+//! before any structural inspection (collection unwrapping, validity) and a
+//! generic base class binding its own parameters (`Derived<T> : Base<T>`)
+//! propagates the argument into the base's fields.
 use crate::assembly::AssemblyTypeTreeGenerator;
 use crate::template::*;
 use crate::version::UnityVersion;
@@ -42,60 +39,59 @@ type Resolved = (
     &'static TypeDefinition<'static>,
 );
 
+/// A concrete generic argument: the member type bound to a type parameter,
+/// together with the context it must itself be read in (its instantiation
+/// site's assembly and any further argument bindings).
+#[derive(Clone)]
+struct GenericArg {
+    member: &'static MemberType,
+    ctx: TypeCtx,
+}
+
 /// The context for reading a type's fields: the resolution it lives in, plus
-/// the generic arguments bound to its type parameters (and where those
-/// arguments themselves resolve, i.e. the instantiation site's assembly).
-#[derive(Clone, Copy)]
+/// the generic arguments bound to its type parameters. Each argument carries
+/// its own context, so substitution is a recursive environment — a base class
+/// `Base<T>` reached from `Derived<float>` binds `T` to `float` read in the
+/// `Derived` site, not to the open parameter.
+#[derive(Clone)]
 struct TypeCtx {
     res: &'static Resolution<'static>,
-    args: &'static [MemberType],
-    args_res: &'static Resolution<'static>,
+    args: std::rc::Rc<[GenericArg]>,
 }
 
 impl TypeCtx {
     fn root(res: &'static Resolution<'static>) -> Self {
         TypeCtx {
             res,
-            args: &[],
-            args_res: res,
+            args: std::rc::Rc::from([]),
         }
     }
 }
 
-/// A resolved type together with the generic arguments to read it with.
+/// A resolved type together with the context (arguments) to read it with.
 struct ResolvedType {
     res: &'static Resolution<'static>,
     def: &'static TypeDefinition<'static>,
-    args: &'static [MemberType],
-    args_res: &'static Resolution<'static>,
+    ctx: TypeCtx,
 }
 
 impl ResolvedType {
     fn ctx(&self) -> TypeCtx {
-        TypeCtx {
-            res: self.res,
-            args: self.args,
-            args_res: self.args_res,
-        }
+        self.ctx.clone()
     }
 }
 
 /// Replace an open generic parameter `T`(n) with the concrete argument bound in
-/// `ctx`; other member types pass through unchanged.
-fn effective(member: &'static MemberType, ctx: TypeCtx) -> (&'static MemberType, TypeCtx) {
+/// `ctx`, recursively — the argument is returned with its own context so a
+/// substituted type that is itself open resolves further. Non-parameter member
+/// types pass through unchanged.
+fn effective(member: &'static MemberType, ctx: &TypeCtx) -> (&'static MemberType, TypeCtx) {
     if let MemberType::TypeGeneric(n) = member
         && let Some(arg) = ctx.args.get(*n)
     {
-        return (
-            arg,
-            TypeCtx {
-                res: ctx.args_res,
-                args: &[],
-                args_res: ctx.args_res,
-            },
-        );
+        return effective(arg.member, &arg.ctx);
     }
-    (member, ctx)
+    (member, ctx.clone())
 }
 
 pub(crate) struct Generator<'r> {
@@ -124,7 +120,7 @@ impl<'r> Generator<'r> {
         let mut children = Vec::new();
         if let Some(def) = find_type(primary, namespace, type_name) {
             let limit = self.version.serialization_limit();
-            self.recursive_type_load(TypeCtx::root(primary), def, &mut children, limit, true);
+            self.recursive_type_load(&TypeCtx::root(primary), def, &mut children, limit, true);
         }
         if self.using_managed_reference {
             children.push(managed_references_registry("references", &self.version));
@@ -134,7 +130,7 @@ impl<'r> Generator<'r> {
 
     fn recursive_type_load(
         &mut self,
-        ctx: TypeCtx,
+        ctx: &TypeCtx,
         def: &'static TypeDefinition<'static>,
         out: &mut Vec<TemplateField>,
         available_depth: i32,
@@ -146,7 +142,7 @@ impl<'r> Generator<'r> {
             available_depth - 1
         };
         if let Some(base) = self.inherited_base(ctx, def) {
-            self.recursive_type_load(base.ctx(), base.def, out, depth, true);
+            self.recursive_type_load(&base.ctx(), base.def, out, depth, true);
         }
         out.extend(self.read_types(ctx, def, depth));
     }
@@ -155,7 +151,7 @@ impl<'r> Generator<'r> {
     /// an unresolvable base.
     fn inherited_base(
         &self,
-        ctx: TypeCtx,
+        ctx: &TypeCtx,
         def: &'static TypeDefinition<'static>,
     ) -> Option<ResolvedType> {
         let ts = def.extends.as_ref()?;
@@ -167,7 +163,7 @@ impl<'r> Generator<'r> {
 
     fn read_types(
         &mut self,
-        ctx: TypeCtx,
+        ctx: &TypeCtx,
         def: &'static TypeDefinition<'static>,
         available_depth: i32,
     ) -> Vec<TemplateField> {
@@ -175,26 +171,39 @@ impl<'r> Generator<'r> {
         for fi in self.acceptable_fields(ctx, def, available_depth) {
             let field = &def.fields[fi];
 
-            let mut element = &field.return_type;
+            // Substitute an open generic parameter (`T`) before any structural
+            // inspection, so a collection-typed argument (`Holder<int[]>`) is
+            // unwrapped on the concrete type, not the open one.
+            let (member, ectx) = effective(&field.return_type, ctx);
+
+            let mut element = member;
+            let mut element_ctx = ectx.clone();
             let mut is_array_or_list = false;
-            if let Some(elem) = vector_element(&field.return_type) {
+            if let Some(elem) = vector_element(member) {
                 is_array_or_list = true;
                 element = elem;
-            } else if let Some(elem) = list_element(&field.return_type, ctx.res) {
+            } else if let Some(elem) = list_element(member, ectx.res) {
                 is_array_or_list = true;
                 element = elem;
             }
+            // A collection element may itself be an open parameter; substitute
+            // again so the element classifies on its concrete type.
+            if is_array_or_list {
+                (element, element_ctx) = effective(element, &ectx);
+            }
 
-            let class = self.classify(field, element, ctx, available_depth);
+            let kind = self.classify(field, element, &element_ctx, ctx.res, available_depth);
+            let ty = kind.type_name();
+            let plain_vector = kind.collection_is_plain_vector();
             let mut node = TemplateField {
                 name: field.name.to_string(),
-                aligned: type_aligns_by_name(&class.ty),
-                ty: class.ty,
-                children: class.children,
+                aligned: type_aligns_by_name(&ty),
+                ty,
+                children: kind.into_children(&self.version),
             };
 
             if is_array_or_list {
-                node = if class.primitive || class.string || class.derives_ueobject {
+                node = if plain_vector {
                     vector(node)
                 } else {
                     vector_with_type(node)
@@ -205,57 +214,38 @@ impl<'r> Generator<'r> {
         out
     }
 
+    /// Classify the field's (already generic-substituted) element type into a
+    /// template node. `element`/`element_ctx` are the substituted type and its
+    /// context; `field_res` is the assembly the field is *declared* in, used to
+    /// read the field's own attributes (e.g. `[SerializeReference]`).
     fn classify(
         &mut self,
         field: &Field,
         element: &'static MemberType,
-        ctx: TypeCtx,
+        element_ctx: &TypeCtx,
+        field_res: &'static Resolution<'static>,
         available_depth: i32,
-    ) -> Classified {
-        // Substitute an open generic parameter (`T`) with the concrete argument.
-        let (element, ectx) = effective(element, ctx);
-
+    ) -> FieldKind {
         if let Some(name) = base_primitive_name(element) {
-            return Classified::leaf(name.to_string(), true, false, false);
+            return FieldKind::Primitive(name.to_string());
         }
         if is_string(element) {
-            return Classified {
-                ty: "string".to_string(),
-                primitive: false,
-                string: true,
-                derives_ueobject: false,
-                children: string_children(),
-            };
+            return FieldKind::String;
         }
-        let Some(rt) = self.resolve_concrete(element, ectx) else {
-            return Classified::leaf(String::new(), false, false, false);
+        let Some(rt) = self.resolve_concrete(element, element_ctx) else {
+            return FieldKind::Primitive(String::new());
         };
 
         if let Some(under) = self.enum_underlying(rt.res, rt.def) {
-            let ty = convert_base_to_primitive(&under)
-                .unwrap_or("int")
-                .to_string();
-            return Classified::leaf(ty, true, false, false);
+            let ty = convert_base_to_primitive(&under).unwrap_or("int");
+            return FieldKind::Primitive(ty.to_string());
         }
         if self.derives_from_ueobject(rt.res, rt.def) {
-            let ty = format!("PPtr<${}>", rt.def.name);
-            return Classified {
-                ty,
-                primitive: false,
-                string: false,
-                derives_ueobject: true,
-                children: pptr_children(&self.version),
-            };
+            return FieldKind::PPtr(rt.def.name.to_string());
         }
-        if field_has_serialize_reference(field, ctx.res) {
+        if field_has_serialize_reference(field, field_res) {
             self.using_managed_reference = true;
-            return Classified {
-                ty: "managedReference".to_string(),
-                primitive: false,
-                string: false,
-                derives_ueobject: false,
-                children: managed_reference_children(&self.version),
-            };
+            return FieldKind::ManagedReference;
         }
 
         let def = rt.def;
@@ -268,24 +258,21 @@ impl<'r> Generator<'r> {
         } else {
             Vec::new()
         };
-        Classified {
+        FieldKind::Named {
             ty: def.name.to_string(),
-            primitive: false,
-            string: false,
-            derives_ueobject: false,
             children,
         }
     }
 
     fn serialized(&mut self, rt: ResolvedType, available_depth: i32) -> Vec<TemplateField> {
         let mut out = Vec::new();
-        self.recursive_type_load(rt.ctx(), rt.def, &mut out, available_depth, false);
+        self.recursive_type_load(&rt.ctx(), rt.def, &mut out, available_depth, false);
         out
     }
 
     fn acceptable_fields(
         &self,
-        ctx: TypeCtx,
+        ctx: &TypeCtx,
         def: &'static TypeDefinition<'static>,
         available_depth: i32,
     ) -> Vec<usize> {
@@ -301,42 +288,50 @@ impl<'r> Generator<'r> {
                 continue;
             }
 
-            let check = if let Some(elem) = collection_element(&field.return_type, ctx.res) {
+            // Substitute generic parameters before structural checks, mirroring
+            // the emit path in `read_types`: a collection-typed argument must be
+            // detected on the concrete type, not the open parameter.
+            let (member, ectx) = effective(&field.return_type, ctx);
+            let check = if let Some(elem) = collection_element(member, ectx.res) {
                 if available_depth < 0 {
                     continue;
                 }
-                if collection_element(elem, ctx.res).is_some() {
+                let (elem, eectx) = effective(elem, &ectx);
+                if collection_element(elem, eectx.res).is_some() {
                     continue; // Unity can't serialize collections of collections
                 }
                 elem
             } else {
-                if self.member_is_same_type(&field.return_type, ctx, def)
+                if self.member_is_same_type(member, &ectx, def)
                     && !self.derives_from_ueobject(ctx.res, def)
                 {
                     continue; // self-typed field on a non-UnityEngine.Object type
                 }
-                &field.return_type
+                member
             };
 
-            if self.is_valid_def(field, check, ctx, available_depth) {
+            if self.is_valid_def(field, check, &ectx, ctx.res, available_depth) {
                 valid.push(fi);
             }
         }
         valid
     }
 
+    /// Whether `member` (already generic-substituted, read in `member_ctx`)
+    /// yields a serialized field. `field_res` is the field's declaring assembly,
+    /// for reading its attributes.
     fn is_valid_def(
         &self,
         field: &Field,
         member: &'static MemberType,
-        ctx: TypeCtx,
+        member_ctx: &TypeCtx,
+        field_res: &'static Resolution<'static>,
         available_depth: i32,
     ) -> bool {
-        let (member, ectx) = effective(member, ctx);
         if base_primitive_name(member).is_some() || is_string(member) {
             return true;
         }
-        let Some(rt) = self.resolve_concrete(member, ectx) else {
+        let Some(rt) = self.resolve_concrete(member, member_ctx) else {
             return false;
         };
 
@@ -355,7 +350,7 @@ impl<'r> Generator<'r> {
         if self.derives_from_ueobject(rt.res, rt.def) || is_special_unity_type(&full_name) {
             return true;
         }
-        if field_has_serialize_reference(field, ctx.res) {
+        if field_has_serialize_reference(field, field_res) {
             return !is_value_type(rt.res, rt.def) && rt.def.generic_parameters.is_empty();
         }
         if is_assembly_blacklisted(assembly_name(rt.res)) {
@@ -367,7 +362,7 @@ impl<'r> Generator<'r> {
     fn member_is_same_type(
         &self,
         member: &'static MemberType,
-        ctx: TypeCtx,
+        ctx: &TypeCtx,
         def: &'static TypeDefinition<'static>,
     ) -> bool {
         matches!(self.resolve_member(member, ctx), Some(rt) if std::ptr::eq(rt.def, def))
@@ -396,7 +391,7 @@ impl<'r> Generator<'r> {
         if base == "System.Object" {
             return false;
         }
-        match self.resolve_source_in(ts, TypeCtx::root(res)) {
+        match self.resolve_source_in(ts, &TypeCtx::root(res)) {
             Some(base) => self.derives_from_ueobject(base.res, base.def),
             None => false,
         }
@@ -418,14 +413,14 @@ impl<'r> Generator<'r> {
 
     /// Resolve a field's member type, substituting an open generic parameter
     /// with its concrete argument from `ctx` first.
-    fn resolve_member(&self, member: &'static MemberType, ctx: TypeCtx) -> Option<ResolvedType> {
+    fn resolve_member(&self, member: &'static MemberType, ctx: &TypeCtx) -> Option<ResolvedType> {
         let (member, ctx) = effective(member, ctx);
-        self.resolve_concrete(member, ctx)
+        self.resolve_concrete(member, &ctx)
     }
 
     /// Resolve an already-concrete member type (no generic substitution) to its
     /// definition, carrying any generic arguments for further field resolution.
-    fn resolve_concrete(&self, member: &'static MemberType, ctx: TypeCtx) -> Option<ResolvedType> {
+    fn resolve_concrete(&self, member: &'static MemberType, ctx: &TypeCtx) -> Option<ResolvedType> {
         let MemberType::Base(b) = member else {
             return None;
         };
@@ -438,20 +433,34 @@ impl<'r> Generator<'r> {
     fn resolve_source_in(
         &self,
         source: &'static TypeSource<MemberType>,
-        ctx: TypeCtx,
+        ctx: &TypeCtx,
     ) -> Option<ResolvedType> {
-        let (user, args) = match source {
+        let (user, parameters) = match source {
             TypeSource::User(user) => (user, [].as_slice()),
             TypeSource::Generic { base, parameters } => (base, parameters.as_slice()),
         };
         let (res, def) = self.resolve_user(user, ctx.res)?;
-        // Generic arguments are written at the instantiation site, so they
-        // resolve in `ctx.res` even when `def` lives in another assembly.
+        // Each generic argument is bound in the current context: it is written
+        // at this instantiation site (so it resolves in `ctx.res`), and an
+        // argument that is itself an open parameter (`Base<T>` reached from
+        // `Derived<float>`) is substituted through `ctx` first.
+        let args: Vec<GenericArg> = parameters
+            .iter()
+            .map(|param| {
+                let (member, arg_ctx) = effective(param, ctx);
+                GenericArg {
+                    member,
+                    ctx: arg_ctx,
+                }
+            })
+            .collect();
         Some(ResolvedType {
             res,
             def,
-            args,
-            args_res: ctx.res,
+            ctx: TypeCtx {
+                res,
+                args: args.into(),
+            },
         })
     }
 
@@ -500,23 +509,56 @@ impl<'r> Generator<'r> {
     }
 }
 
-struct Classified {
-    ty: String,
-    primitive: bool,
-    string: bool,
-    derives_ueobject: bool,
-    children: Vec<TemplateField>,
+/// What a serialized field's element type classifies as. One value drives both
+/// the emitted node (type name + children) and, where it differs, how a
+/// collection of it is wrapped.
+enum FieldKind {
+    /// A primitive scalar (its AssetsTools type name), or an enum reduced to its
+    /// underlying primitive.
+    Primitive(String),
+    /// A `string` (with its hardcoded `Array of char` children).
+    String,
+    /// A reference to a `UnityEngine.Object`, serialized as `PPtr<$Name>`.
+    PPtr(String),
+    /// A `[SerializeReference]` field, serialized as `managedReference`.
+    ManagedReference,
+    /// A by-value type read by name with its own serialized children (a nested
+    /// serializable struct/class or a special Unity value type).
+    Named {
+        ty: String,
+        children: Vec<TemplateField>,
+    },
 }
 
-impl Classified {
-    fn leaf(ty: String, primitive: bool, string: bool, derives_ueobject: bool) -> Classified {
-        Classified {
-            ty,
-            primitive,
-            string,
-            derives_ueobject,
-            children: Vec::new(),
+impl FieldKind {
+    fn type_name(&self) -> String {
+        match self {
+            FieldKind::Primitive(ty) => ty.clone(),
+            FieldKind::String => "string".to_string(),
+            FieldKind::PPtr(name) => format!("PPtr<${name}>"),
+            FieldKind::ManagedReference => "managedReference".to_string(),
+            FieldKind::Named { ty, .. } => ty.clone(),
         }
+    }
+
+    fn into_children(self, version: &UnityVersion) -> Vec<TemplateField> {
+        match self {
+            FieldKind::Primitive(_) => Vec::new(),
+            FieldKind::String => string_children(),
+            FieldKind::PPtr(_) => pptr_children(version),
+            FieldKind::ManagedReference => managed_reference_children(version),
+            FieldKind::Named { children, .. } => children,
+        }
+    }
+
+    /// Whether a collection of this kind is wrapped as a plain `vector` (size +
+    /// inline data); named/managed-reference kinds keep their own type via
+    /// `vector_with_type` instead.
+    fn collection_is_plain_vector(&self) -> bool {
+        matches!(
+            self,
+            FieldKind::Primitive(_) | FieldKind::String | FieldKind::PPtr(_)
+        )
     }
 }
 

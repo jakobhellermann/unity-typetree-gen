@@ -1,0 +1,32 @@
+[
+  {
+    "m_Type": "GenericInheritance",
+    "m_Name": "Base",
+    "m_Level": 0,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "Derived\u00601",
+    "m_Name": "d",
+    "m_Level": 1,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "base_value",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "base_tag",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "derived_value",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  }
+]
