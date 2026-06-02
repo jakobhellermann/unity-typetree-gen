@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Stub of a UnityEngine *module* assembly. In real games the actual type
+       definitions live in module DLLs (UnityEngine.CoreModule.dll, …) while
+       UnityEngine.dll is a facade of [TypeForwardedTo] entries pointing here.
+       This assembly holds the real definitions; UnityEngine.dll forwards to it.
+       Referenced one-way (facade -> module), so there is no reference cycle. -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AssemblyName>UnityEngine.CoreModule</AssemblyName>
+    <Deterministic>true</Deterministic>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+</Project>

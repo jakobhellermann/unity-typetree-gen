@@ -10,4 +10,8 @@
     <Deterministic>true</Deterministic>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
+  <!-- Facade only: every type is forwarded to the module assembly. -->
+  <ItemGroup>
+    <ProjectReference Include="../UnityEngine.CoreModule/UnityEngine.CoreModule.csproj" />
+  </ItemGroup>
 </Project>

@@ -13,6 +13,10 @@ use unity_typetree_gen::{AssemblyTypeTreeGenerator, Node};
 
 const FIXTURES_DLL: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/Fixtures.dll");
 const UNITY_DLL: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/UnityEngine.dll");
+const UNITY_CORE_DLL: &str = concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/tests/UnityEngine.CoreModule.dll"
+);
 const SNAPSHOTS: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/snapshots");
 
 /// Unity versions snapshotted under `tests/snapshots/<version>/`; kept in sync
@@ -36,6 +40,9 @@ const FIXTURES: &[&str] = &[
     "Fixtures.GenericCollectionArg",
     "Fixtures.GenericInheritance",
     "Fixtures.NestedTypes",
+    // Defined in UnityEngine.CoreModule, forwarded by the UnityEngine.dll facade;
+    // covered by `type_forwarder`.
+    "UnityEngine.ForwardedAsset",
 ];
 
 #[derive(Debug, Deserialize, PartialEq, Eq)]
@@ -67,22 +74,45 @@ fn read_dll(path: &str) -> Vec<u8> {
     fs::read(path).unwrap_or_else(|e| panic!("read {path}: {e} (run `just regen`)"))
 }
 
+/// Registers all fixture assemblies. The UnityEngine stubs are split into a
+/// facade (`UnityEngine.dll`, only `[TypeForwardedTo]` entries) and the module
+/// that holds the real definitions (`UnityEngine.CoreModule.dll`) — mirroring a
+/// shipped game and exercising cross-assembly + type-forwarder resolution.
+fn new_generator(version: &str) -> AssemblyTypeTreeGenerator {
+    let mut generator = AssemblyTypeTreeGenerator::new(version);
+    generator.add_assembly("Fixtures.dll", read_dll(FIXTURES_DLL));
+    generator.add_assembly("UnityEngine.dll", read_dll(UNITY_DLL));
+    generator.add_assembly("UnityEngine.CoreModule.dll", read_dll(UNITY_CORE_DLL));
+    generator
+}
+
 fn check(full_name: &str) {
+    check_in("Fixtures.dll", full_name);
+}
+
+/// Like [`check`], but generates the type via `assembly` — used for types whose
+/// MonoScript names a facade assembly that only forwards them.
+fn check_in(assembly: &str, full_name: &str) {
     let (namespace, type_name) = full_name.rsplit_once('.').unwrap_or(("", full_name));
 
     for version in VERSIONS {
-        // The UnityEngine stubs are a separate assembly, so its types are
-        // cross-assembly references the generator must resolve.
-        let mut generator = AssemblyTypeTreeGenerator::new(*version);
-        generator.add_assembly("Fixtures.dll", read_dll(FIXTURES_DLL));
-        generator.add_assembly("UnityEngine.dll", read_dll(UNITY_DLL));
-
+        let generator = new_generator(version);
         let got = generator
-            .generate("Fixtures.dll", namespace, type_name)
+            .generate(assembly, namespace, type_name)
             .unwrap_or_else(|| panic!("generate {full_name} @ {version}"));
         let want = load_snapshot(version, full_name);
         assert_eq!(got, want, "type tree mismatch for {full_name} @ {version}");
     }
+}
+
+/// `ForwardedAsset` is defined in `UnityEngine.CoreModule` but a MonoScript names
+/// it under the `UnityEngine.dll` facade, which only forwards it. Generating via
+/// the facade must follow the forwarder to the module and produce the full type
+/// tree (regression: the top-level lookup previously didn't follow forwarders
+/// and returned an empty type).
+#[test]
+fn type_forwarder() {
+    check_in("UnityEngine.dll", "UnityEngine.ForwardedAsset");
 }
 
 macro_rules! snapshot_tests {

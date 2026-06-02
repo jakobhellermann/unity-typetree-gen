@@ -12,6 +12,7 @@ build-fixtures:
     dotnet build fixtures/Fixtures.csproj -c Release
     cp {{fixtures_dir}}/Fixtures.dll tests/Fixtures.dll
     cp {{fixtures_dir}}/UnityEngine.dll tests/UnityEngine.dll
+    cp {{fixtures_dir}}/UnityEngine.CoreModule.dll tests/UnityEngine.CoreModule.dll
 
 # Regenerate the AssetsTools.NET reference snapshots from the built fixtures.
 snapshots: build-fixtures
