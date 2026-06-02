@@ -183,6 +183,41 @@ fn nested_type_not_matched_as_top_level() {
     assert_eq!(generator.generate("Fixtures.dll", "", "Inner"), None);
 }
 
+/// A loader resolves assembly bytes lazily by name, and only for the assemblies
+/// actually touched: generating a `Fixtures.dll` type that references no other
+/// assembly must not load the UnityEngine stubs.
+#[test]
+fn lazy_loader_only_loads_what_is_used() {
+    use std::cell::RefCell;
+
+    let loaded = std::rc::Rc::new(RefCell::new(Vec::new()));
+    let recorder = loaded.clone();
+    let generator = AssemblyTypeTreeGenerator::new(VERSIONS[0].parse().unwrap()).with_loader(
+        move |name| {
+            recorder.borrow_mut().push(name.to_string());
+            match name {
+                "Fixtures.dll" => Some(read_dll(FIXTURES_DLL)),
+                "UnityEngine.dll" => Some(read_dll(UNITY_DLL)),
+                "UnityEngine.CoreModule.dll" => Some(read_dll(UNITY_CORE_DLL)),
+                _ => None,
+            }
+        },
+    );
+
+    // Primitives reference only built-in types, so only Fixtures.dll loads.
+    let got = generator
+        .generate("Fixtures.dll", "Fixtures", "Primitives")
+        .expect("generate Primitives");
+    assert_eq!(flatten(&got), load_snapshot(VERSIONS[0], "Fixtures.Primitives"));
+    assert_eq!(*loaded.borrow(), vec!["Fixtures.dll".to_string()]);
+
+    // A second lookup in the same assembly does not re-invoke the loader.
+    generator
+        .generate("Fixtures.dll", "Fixtures", "Enums")
+        .expect("generate Enums");
+    assert_eq!(*loaded.borrow(), vec!["Fixtures.dll".to_string()]);
+}
+
 macro_rules! snapshot_tests {
     ($($name:ident => $full:literal),+ $(,)?) => {
         $(#[test] fn $name() { check($full); })+

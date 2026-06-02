@@ -22,14 +22,11 @@ fn main() {
     let version = version
         .parse()
         .expect("invalid unity version (e.g. 6000.0.0f1)");
-    let mut generator = AssemblyTypeTreeGenerator::new(version);
-    for entry in std::fs::read_dir(managed_dir).unwrap() {
-        let path = entry.unwrap().path();
-        if path.extension().is_some_and(|e| e == "dll") {
-            let name = path.file_name().unwrap().to_str().unwrap().to_string();
-            generator.add_assembly(name, std::fs::read(&path).unwrap());
-        }
-    }
+    // Resolve assemblies lazily from the Managed directory: only the DLLs
+    // actually referenced by the requested MonoBehaviour are read and parsed.
+    let managed_dir = std::path::PathBuf::from(managed_dir);
+    let generator = AssemblyTypeTreeGenerator::new(version)
+        .with_loader(move |name| std::fs::read(managed_dir.join(name)).ok());
 
     let (namespace, type_name) = full_name.rsplit_once('.').unwrap_or(("", full_name));
     let tree = generator
