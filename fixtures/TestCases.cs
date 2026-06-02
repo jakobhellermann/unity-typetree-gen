@@ -159,6 +159,22 @@ namespace Fixtures
         public int amount;
     }
 
+    [Serializable]
+    public class Holder<T>
+    {
+        public T value;
+        public int tag;
+    }
+
+    // Generic serializable types (Unity 2020+): the `value` field's open type
+    // parameter must be solidified to the concrete argument.
+    public class Generics : MonoBehaviour
+    {
+        public Holder<int> i;
+        public Holder<Vector3> v;
+        public Holder<GameObject> go;
+    }
+
     // Fields whose type derives from UnityEngine.Object via a base class in
     // another assembly must still serialize as PPtr (cross-assembly base walk).
     public class ScriptableRefs : MonoBehaviour
