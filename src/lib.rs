@@ -1,6 +1,14 @@
 // TODO(ai-review): review for style and correctness
 use dotnetdll::prelude::Resolution;
 
+mod generator;
+mod template;
+mod version;
+
+pub use version::UnityVersion;
+
+use template::TemplateField;
+
 /// A flattened Unity type-tree node. Matches the snapshot JSON emitted by
 /// `snapshot-gen` (the AssetsTools.NET reference), so the two compare directly.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -20,20 +28,33 @@ pub const ALIGN_FLAG: i32 = 0x4000;
 ///
 /// The result starts with the `Base` root (type = the class name, level 0),
 /// followed by the serialized fields in depth order.
-///
-/// TODO: port AssetsTools.NET's `MonoCecilTempGenerator`. This is currently a
-/// stub that emits only the `Base` root, so the snapshot tests run red.
 pub fn generate(
     resolution: &Resolution,
     namespace: &str,
     type_name: &str,
     unity_version: &str,
 ) -> Vec<Node> {
-    let _ = (resolution, namespace, unity_version);
-    vec![Node {
-        m_Type: type_name.to_string(),
-        m_Name: "Base".to_string(),
-        m_Level: 0,
-        m_MetaFlag: 0,
-    }]
+    let version = UnityVersion::parse(unity_version);
+    let children = generator::Generator::read(resolution, namespace, type_name, version);
+    let base = TemplateField {
+        name: "Base".to_string(),
+        ty: type_name.to_string(),
+        aligned: false,
+        children,
+    };
+    let mut nodes = Vec::new();
+    flatten(&base, 0, &mut nodes);
+    nodes
+}
+
+fn flatten(field: &TemplateField, level: u8, out: &mut Vec<Node>) {
+    out.push(Node {
+        m_Type: field.ty.clone(),
+        m_Name: field.name.clone(),
+        m_Level: level,
+        m_MetaFlag: if field.aligned { ALIGN_FLAG } else { 0 },
+    });
+    for child in &field.children {
+        flatten(child, level + 1, out);
+    }
 }
