@@ -43,6 +43,18 @@ namespace UnityEngine
     // real fields); the generator must emit the GUIStyle template subtree.
     public class GUIStyle { public int unused; }
 
+    // A two-parameter generic in a different assembly than the fixtures, whose
+    // serialized fields are typed by its parameters (List<K>/List<V>) and which
+    // derives from a stop-type base (Dictionary<K,V>). Instantiated cross-assembly
+    // with distinct args, both fields must resolve. Mirrors RCGMaker's
+    // SerializedDictionary<K,V> : Dictionary<K,V>.
+    [System.Serializable]
+    public class SerializedDict<K, V> : System.Collections.Generic.Dictionary<K, V>
+    {
+        public System.Collections.Generic.List<K> keyData;
+        public System.Collections.Generic.List<V> valueData;
+    }
+
     // A struct with a nested enum, in a different assembly than the fixtures.
     // A field typed `Navigation.Mode` is a cross-assembly reference to a *nested*
     // type, which the generator must resolve via the enclosing type ref.

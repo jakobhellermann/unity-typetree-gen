@@ -41,6 +41,7 @@ const FIXTURES: &[&str] = &[
     "Fixtures.Generics",
     "Fixtures.GenericCollectionArg",
     "Fixtures.GenericInheritance",
+    "Fixtures.TwoParamGeneric",
     "Fixtures.NestedTypes",
     // Defined in UnityEngine.CoreModule, forwarded by the UnityEngine.dll facade;
     // covered by `type_forwarder`.
@@ -159,6 +160,7 @@ snapshot_tests! {
     generics => "Fixtures.Generics",
     generic_collection_arg => "Fixtures.GenericCollectionArg",
     generic_inheritance => "Fixtures.GenericInheritance",
+    two_param_generic => "Fixtures.TwoParamGeneric",
     nested_types => "Fixtures.NestedTypes",
 }
 

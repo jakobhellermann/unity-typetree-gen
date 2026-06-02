@@ -232,6 +232,17 @@ namespace Fixtures
         public Derived<float> d;
     }
 
+    // Gap 3: a two-parameter generic defined in *another* assembly
+    // (UnityEngine.SerializedDict<K,V> in the CoreModule stub), instantiated here
+    // with two distinct arguments. Both `keyData` (List<K> -> List<GameObject>)
+    // and `valueData` (List<V> -> List<int>) must resolve; a bug in per-parameter
+    // substitution across the assembly boundary drops the first.
+    // Mirrors RCGMaker's SerializedDictionary<AnimationClip,String>.
+    public class TwoParamGeneric : MonoBehaviour
+    {
+        public SerializedDict<GameObject, int> dict;
+    }
+
     [Serializable]
     public class Outer
     {

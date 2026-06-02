@@ -299,25 +299,28 @@ impl<'r> Generator<'r> {
             // the emit path in `read_types`: a collection-typed argument must be
             // detected on the concrete type, not the open parameter.
             let (member, ectx) = effective(&field.return_type, ctx);
-            let check = if let Some(elem) = collection_element(member, ectx.res) {
+            let (check, check_ctx) = if let Some(elem) = collection_element(member, ectx.res) {
                 if available_depth < 0 {
                     continue;
                 }
+                // The element may itself be an open parameter; substitute it and
+                // carry its own context, so validity is checked on the concrete
+                // element type (e.g. `List<K>` with `K = GameObject`).
                 let (elem, eectx) = effective(elem, &ectx);
                 if collection_element(elem, eectx.res).is_some() {
                     continue; // Unity can't serialize collections of collections
                 }
-                elem
+                (elem, eectx)
             } else {
                 if self.member_is_same_type(member, &ectx, def)
                     && !self.derives_from_ueobject(ctx.res, def)
                 {
                     continue; // self-typed field on a non-UnityEngine.Object type
                 }
-                member
+                (member, ectx.clone())
             };
 
-            if self.is_valid_def(field, check, &ectx, ctx.res, available_depth) {
+            if self.is_valid_def(field, check, &check_ctx, ctx.res, available_depth) {
                 valid.push(fi);
             }
         }

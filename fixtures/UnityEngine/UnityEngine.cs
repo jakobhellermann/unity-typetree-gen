@@ -38,4 +38,5 @@ using System.Runtime.CompilerServices;
 [assembly: TypeForwardedTo(typeof(UnityEngine.Gradient))]
 [assembly: TypeForwardedTo(typeof(UnityEngine.GUIStyle))]
 [assembly: TypeForwardedTo(typeof(UnityEngine.Navigation))]
+[assembly: TypeForwardedTo(typeof(UnityEngine.SerializedDict<,>))]
 [assembly: TypeForwardedTo(typeof(UnityEngine.ForwardedAsset))]
