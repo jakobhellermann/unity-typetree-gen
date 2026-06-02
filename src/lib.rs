@@ -1,10 +1,12 @@
 // TODO(ai-review): review for style and correctness
 use dotnetdll::prelude::Resolution;
 
+mod assembly;
 mod generator;
 mod template;
 mod version;
 
+pub use assembly::AssemblyTypeTreeGenerator;
 pub use version::UnityVersion;
 
 use template::TemplateField;
