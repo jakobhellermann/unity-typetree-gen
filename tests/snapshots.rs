@@ -116,6 +116,24 @@ fn type_forwarder() {
     check_in("UnityEngine.dll", "UnityEngine.ForwardedAsset");
 }
 
+/// A type that doesn't exist in the assembly (e.g. a MonoScript naming an
+/// editor-only or version-mismatched type) must report not-found (`None`),
+/// not a bogus header-only tree — distinct from a real type with no serialized
+/// fields, which yields `Some` with just the `Base` node.
+#[test]
+fn missing_type_is_none() {
+    let generator = new_generator(VERSIONS[0]);
+    assert_eq!(
+        generator.generate("Fixtures.dll", "Fixtures", "NoSuchType"),
+        None,
+    );
+    // A real, field-less MonoBehaviour still resolves (Some, just the Base node).
+    let empty = generator
+        .generate("UnityEngine.CoreModule.dll", "UnityEngine", "MonoBehaviour")
+        .expect("MonoBehaviour resolves");
+    assert_eq!(empty.len(), 1, "expected only the Base node, got {empty:?}");
+}
+
 macro_rules! snapshot_tests {
     ($($name:ident => $full:literal),+ $(,)?) => {
         $(#[test] fn $name() { check($full); })+

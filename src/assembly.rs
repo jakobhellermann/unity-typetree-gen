@@ -78,7 +78,7 @@ impl AssemblyTypeTreeGenerator {
     ) -> Option<Vec<Node>> {
         let primary = self.resolution(assembly_name)?;
         let version = UnityVersion::parse(&self.unity_version);
-        let children = Generator::new(self, version).read(primary, namespace, type_name);
+        let children = Generator::new(self, version).read(primary, namespace, type_name)?;
         Some(crate::assemble(children, type_name))
     }
 }

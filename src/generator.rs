@@ -110,26 +110,29 @@ impl<'r> Generator<'r> {
     }
 
     /// The serialized fields of `namespace.type_name` in `primary` (the
-    /// MonoBehaviour header is added by the caller).
+    /// MonoBehaviour header is added by the caller), or `None` if the type
+    /// itself can't be resolved in the loaded assemblies (e.g. a MonoScript
+    /// naming an editor-only or version-mismatched type) — distinct from a type
+    /// that resolves but has no serialized fields (`Some(empty)`).
     pub(crate) fn read(
         &mut self,
         primary: &'static Resolution<'static>,
         namespace: &str,
         type_name: &str,
-    ) -> Vec<TemplateField> {
-        let mut children = Vec::new();
+    ) -> Option<Vec<TemplateField>> {
         // A MonoScript may name a type by an assembly that only *forwards* it
         // (e.g. `UnityEngine.dll` forwards `FontAsset` to a module assembly), so
         // follow type-forwarder exports to find the real definition and read it
         // in the assembly it actually lives in.
-        if let Some((res, def)) = self.find_type_following_forwards(primary, namespace, type_name) {
-            let limit = self.version.serialization_limit();
-            self.recursive_type_load(&TypeCtx::root(res), def, &mut children, limit, true);
-        }
+        let (res, def) = self.find_type_following_forwards(primary, namespace, type_name)?;
+
+        let mut children = Vec::new();
+        let limit = self.version.serialization_limit();
+        self.recursive_type_load(&TypeCtx::root(res), def, &mut children, limit, true);
         if self.using_managed_reference {
             children.push(managed_references_registry("references", &self.version));
         }
-        children
+        Some(children)
     }
 
     fn recursive_type_load(
