@@ -1,0 +1,830 @@
+[
+  {
+    "m_Type": "SpecialTypes",
+    "m_Name": "Base",
+    "m_Level": 0,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "Vector2",
+    "m_Name": "v2",
+    "m_Level": 1,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "x",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "y",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "Vector3",
+    "m_Name": "v3",
+    "m_Level": 1,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "x",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "y",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "z",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "Vector4",
+    "m_Name": "v4",
+    "m_Level": 1,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "x",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "y",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "z",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "w",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "Quaternion",
+    "m_Name": "q",
+    "m_Level": 1,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "x",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "y",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "z",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "w",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "Vector2Int",
+    "m_Name": "v2i",
+    "m_Level": 1,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "x",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "y",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "Vector3Int",
+    "m_Name": "v3i",
+    "m_Level": 1,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "x",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "y",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "z",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "Color",
+    "m_Name": "col",
+    "m_Level": 1,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "r",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "g",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "b",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "a",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "Color32",
+    "m_Name": "col32",
+    "m_Level": 1,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "unsigned int",
+    "m_Name": "rgba",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "Rect",
+    "m_Name": "rect",
+    "m_Level": 1,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "x",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "y",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "width",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "height",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "Bounds",
+    "m_Name": "bounds",
+    "m_Level": 1,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "Vector3f",
+    "m_Name": "m_Center",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "x",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "y",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "z",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "Vector3f",
+    "m_Name": "m_Extent",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "x",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "y",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "z",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "BoundsInt",
+    "m_Name": "boundsInt",
+    "m_Level": 1,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "int3_storage",
+    "m_Name": "m_Position",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "x",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "y",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "z",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "int3_storage",
+    "m_Name": "m_Size",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "x",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "y",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "z",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "LayerMask",
+    "m_Name": "mask",
+    "m_Level": 1,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "unsigned int",
+    "m_Name": "m_Bits",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "RectOffset",
+    "m_Name": "rectOffset",
+    "m_Level": 1,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "m_Left",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "m_Right",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "m_Top",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "m_Bottom",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "AnimationCurve",
+    "m_Name": "curve",
+    "m_Level": 1,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "vector",
+    "m_Name": "m_Curve",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "Array",
+    "m_Name": "Array",
+    "m_Level": 3,
+    "m_MetaFlag": 16384
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "size",
+    "m_Level": 4,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "Keyframe",
+    "m_Name": "data",
+    "m_Level": 4,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "time",
+    "m_Level": 5,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "value",
+    "m_Level": 5,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "inSlope",
+    "m_Level": 5,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "outSlope",
+    "m_Level": 5,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "weightedMode",
+    "m_Level": 5,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "inWeight",
+    "m_Level": 5,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "outWeight",
+    "m_Level": 5,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "m_PreInfinity",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "m_PostInfinity",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "m_RotationOrder",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "Gradient",
+    "m_Name": "gradient",
+    "m_Level": 1,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "ColorRGBA",
+    "m_Name": "key0",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "r",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "g",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "b",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "a",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "ColorRGBA",
+    "m_Name": "key1",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "r",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "g",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "b",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "a",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "ColorRGBA",
+    "m_Name": "key2",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "r",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "g",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "b",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "a",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "ColorRGBA",
+    "m_Name": "key3",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "r",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "g",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "b",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "a",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "ColorRGBA",
+    "m_Name": "key4",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "r",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "g",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "b",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "a",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "ColorRGBA",
+    "m_Name": "key5",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "r",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "g",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "b",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "a",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "ColorRGBA",
+    "m_Name": "key6",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "r",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "g",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "b",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "a",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "ColorRGBA",
+    "m_Name": "key7",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "r",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "g",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "b",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "a",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "UInt16",
+    "m_Name": "ctime0",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "UInt16",
+    "m_Name": "ctime1",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "UInt16",
+    "m_Name": "ctime2",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "UInt16",
+    "m_Name": "ctime3",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "UInt16",
+    "m_Name": "ctime4",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "UInt16",
+    "m_Name": "ctime5",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "UInt16",
+    "m_Name": "ctime6",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "UInt16",
+    "m_Name": "ctime7",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "UInt16",
+    "m_Name": "atime0",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "UInt16",
+    "m_Name": "atime1",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "UInt16",
+    "m_Name": "atime2",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "UInt16",
+    "m_Name": "atime3",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "UInt16",
+    "m_Name": "atime4",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "UInt16",
+    "m_Name": "atime5",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "UInt16",
+    "m_Name": "atime6",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "UInt16",
+    "m_Name": "atime7",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "UInt8",
+    "m_Name": "m_Mode",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "SInt8",
+    "m_Name": "m_ColorSpace",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "UInt8",
+    "m_Name": "m_NumColorKeys",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "UInt8",
+    "m_Name": "m_NumAlphaKeys",
+    "m_Level": 2,
+    "m_MetaFlag": 16384
+  }
+]

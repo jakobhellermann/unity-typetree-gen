@@ -1,0 +1,176 @@
+[
+  {
+    "m_Type": "Arrays",
+    "m_Name": "Base",
+    "m_Level": 0,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "vector",
+    "m_Name": "ints",
+    "m_Level": 1,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "Array",
+    "m_Name": "Array",
+    "m_Level": 2,
+    "m_MetaFlag": 16384
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "size",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "data",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "vector",
+    "m_Name": "floats",
+    "m_Level": 1,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "Array",
+    "m_Name": "Array",
+    "m_Level": 2,
+    "m_MetaFlag": 16384
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "size",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "data",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "string",
+    "m_Name": "strings",
+    "m_Level": 1,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "Array",
+    "m_Name": "Array",
+    "m_Level": 2,
+    "m_MetaFlag": 16384
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "size",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "string",
+    "m_Name": "data",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "Array",
+    "m_Name": "Array",
+    "m_Level": 4,
+    "m_MetaFlag": 16384
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "size",
+    "m_Level": 5,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "char",
+    "m_Name": "data",
+    "m_Level": 5,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "vector",
+    "m_Name": "gos",
+    "m_Level": 1,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "Array",
+    "m_Name": "Array",
+    "m_Level": 2,
+    "m_MetaFlag": 16384
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "size",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "PPtr\u003C$GameObject\u003E",
+    "m_Name": "data",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "m_FileID",
+    "m_Level": 4,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "SInt64",
+    "m_Name": "m_PathID",
+    "m_Level": 4,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "Vector3",
+    "m_Name": "verts",
+    "m_Level": 1,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "Array",
+    "m_Name": "Array",
+    "m_Level": 2,
+    "m_MetaFlag": 16384
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "size",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "Vector3",
+    "m_Name": "data",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "x",
+    "m_Level": 4,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "y",
+    "m_Level": 4,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "z",
+    "m_Level": 4,
+    "m_MetaFlag": 0
+  }
+]

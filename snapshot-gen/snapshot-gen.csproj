@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Reference snapshots for the unity-typetree-gen tests: runs
+       AssetsTools.NET's MonoCecilTempGenerator (the same logic the Rust
+       generator ports) over a Managed dir and dumps each MonoBehaviour's
+       type tree as JSON. Pulled purely from nuget — no TypeTreeGeneratorAPI
+       clone, no submodules, no AOT. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RollForward>Major</RollForward>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="AssetsTools.NET.MonoCecil" Version="1.0.1" />
+    <PackageReference Include="Mono.Cecil" Version="0.11.6" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,32 @@
+[
+  {
+    "m_Type": "Strings",
+    "m_Name": "Base",
+    "m_Level": 0,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "string",
+    "m_Name": "s",
+    "m_Level": 1,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "Array",
+    "m_Name": "Array",
+    "m_Level": 2,
+    "m_MetaFlag": 16384
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "size",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "char",
+    "m_Name": "data",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  }
+]

@@ -1,0 +1,164 @@
+[
+  {
+    "m_Type": "NestedSerializable",
+    "m_Name": "Base",
+    "m_Level": 0,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "InnerStruct",
+    "m_Name": "s",
+    "m_Level": 1,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "a",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "b",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "Vector3",
+    "m_Name": "v",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "x",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "y",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "z",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "InnerClass",
+    "m_Name": "c",
+    "m_Level": 1,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "string",
+    "m_Name": "name",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "Array",
+    "m_Name": "Array",
+    "m_Level": 3,
+    "m_MetaFlag": 16384
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "size",
+    "m_Level": 4,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "char",
+    "m_Name": "data",
+    "m_Level": 4,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "vector",
+    "m_Name": "values",
+    "m_Level": 2,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "Array",
+    "m_Name": "Array",
+    "m_Level": 3,
+    "m_MetaFlag": 16384
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "size",
+    "m_Level": 4,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "data",
+    "m_Level": 4,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "InnerStruct",
+    "m_Name": "many",
+    "m_Level": 1,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "Array",
+    "m_Name": "Array",
+    "m_Level": 2,
+    "m_MetaFlag": 16384
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "size",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "InnerStruct",
+    "m_Name": "data",
+    "m_Level": 3,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "int",
+    "m_Name": "a",
+    "m_Level": 4,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "b",
+    "m_Level": 4,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "Vector3",
+    "m_Name": "v",
+    "m_Level": 4,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "x",
+    "m_Level": 5,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "y",
+    "m_Level": 5,
+    "m_MetaFlag": 0
+  },
+  {
+    "m_Type": "float",
+    "m_Name": "z",
+    "m_Level": 5,
+    "m_MetaFlag": 0
+  }
+]
