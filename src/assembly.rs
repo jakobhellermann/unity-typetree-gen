@@ -147,6 +147,11 @@ impl AssemblyTypeTreeGenerator {
         let mut defs = Vec::new();
         for (asm_name, res) in &resolutions {
             for td in &res.type_definitions {
+                // Mono.Cecil's Types (used by the reference C# impl) only yields
+                // top-level types; skip nested types to match that behaviour.
+                if td.encloser.is_some() {
+                    continue;
+                }
                 if g.derives_from_monobehaviour(res, td)? {
                     defs.push((asm_name.clone(), td.type_name()));
                 }
