@@ -1,3 +1,5 @@
 /target
 bin/
 obj/
+tests/*.pdb
+tests/*.deps.json
