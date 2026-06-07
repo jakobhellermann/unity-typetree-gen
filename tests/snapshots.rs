@@ -261,6 +261,97 @@ snapshot_tests! {
     nested_types => "Fixtures.NestedTypes",
 }
 
+// --- monobehaviour_definitions tests ---
+
+/// Returns the type-name portion from each `(assembly, type_name)` pair.
+fn def_names(defs: &[(String, String)]) -> std::collections::HashSet<&str> {
+    defs.iter().map(|(_, n)| n.as_str()).collect()
+}
+
+/// Cross-check Rust `monobehaviour_definitions` against the C#-generated snapshot list.
+///
+/// `snapshot-gen/Program.cs` (AssetsTools.NET + Mono.Cecil `IsMonoBehaviour`) wrote
+/// one `.json` file per MonoBehaviour it found when `just regen` was last run.
+/// The set of snapshot filenames is therefore the canonical C# answer to
+/// "which types are MonoBehaviours?".  Loading the same fixture assemblies and
+/// comparing the full-name lists checks that the Rust implementation agrees with
+/// the C# implementation exactly — including transitive cases like
+/// `Inheritance : Primitives : MonoBehaviour` and excluding `ScriptableObject`.
+#[test]
+fn monobehaviour_definitions_matches_csharp_snapshots() {
+    let generator = new_generator(VERSIONS[0]);
+    for asm in &["Fixtures.dll", "UnityEngine.dll", "UnityEngine.CoreModule.dll"] {
+        generator
+            .load_assembly(&fixture_loader, asm)
+            .unwrap_or_else(|e| panic!("load {asm}: {e}"));
+    }
+
+    let defs = generator
+        .monobehaviour_definitions(&fixture_loader)
+        .expect("monobehaviour_definitions");
+
+    let mut rust_names: Vec<String> = defs.into_iter().map(|(_, n)| n).collect();
+    rust_names.sort();
+
+    // Read the snapshot filenames — these are what C# determined to be MonoBehaviours.
+    let dir = format!("{SNAPSHOTS}/{}", VERSIONS[0]);
+    let mut cs_names: Vec<String> = fs::read_dir(Path::new(&dir))
+        .unwrap_or_else(|e| panic!("read {dir}: {e} (run `just regen`)"))
+        .filter_map(|e| e.ok())
+        .filter_map(|e| {
+            e.file_name()
+                .to_string_lossy()
+                .strip_suffix(".json")
+                .map(str::to_string)
+        })
+        .collect();
+    cs_names.sort();
+
+    assert_eq!(rust_names, cs_names);
+}
+
+/// MonoBehaviour itself and all its ancestors (Behaviour, Component, Object)
+/// must not appear, even when CoreModule is loaded. Only types that *derive from*
+/// MonoBehaviour (not MonoBehaviour itself) are returned.
+///
+/// Also verifies that `ForwardedAsset : MonoBehaviour` (defined in CoreModule)
+/// is included, and that ScriptableObject is excluded even though it shares
+/// `UnityEngine.Object` as a common ancestor with MonoBehaviour.
+#[test]
+fn monobehaviour_definitions_excludes_base_classes() {
+    let generator = new_generator(VERSIONS[0]);
+    generator
+        .load_assembly(&fixture_loader, "UnityEngine.CoreModule.dll")
+        .expect("load CoreModule");
+
+    let defs = generator
+        .monobehaviour_definitions(&fixture_loader)
+        .expect("monobehaviour_definitions");
+
+    let names = def_names(&defs);
+
+    // ForwardedAsset : MonoBehaviour is a real MonoBehaviour and must be included.
+    assert!(
+        names.contains("UnityEngine.ForwardedAsset"),
+        "ForwardedAsset (MonoBehaviour subclass in CoreModule) must be included"
+    );
+
+    // MonoBehaviour itself does not *derive from* MonoBehaviour.
+    assert!(
+        !names.contains("UnityEngine.MonoBehaviour"),
+        "MonoBehaviour itself must not be returned"
+    );
+
+    // Ancestors of MonoBehaviour — all reachable via BASE_STOP short-circuit.
+    assert!(!names.contains("UnityEngine.Behaviour"));
+    assert!(!names.contains("UnityEngine.Component"));
+    assert!(!names.contains("UnityEngine.Object"));
+
+    // ScriptableObject shares the UnityEngine.Object ancestor but is not a
+    // MonoBehaviour; BASE_STOP correctly terminates the walk at ScriptableObject.
+    assert!(!names.contains("UnityEngine.ScriptableObject"));
+}
+
 /// Every committed snapshot must have a corresponding fixture test above (per
 /// version), so adding a fixture without wiring it up fails loudly.
 #[test]
