@@ -400,6 +400,30 @@ impl<'r> Generator<'r> {
 
     // --- type predicates (cross-assembly aware) ---
 
+    pub(crate) fn derives_from_monobehaviour(
+        &self,
+        res: &'static Resolution<'static>,
+        def: &'static TypeDefinition<'static>,
+    ) -> Result<bool, io::Error> {
+        if matches!(def.flags.kind, Kind::Interface) {
+            return Ok(false);
+        }
+        let Some(ts) = def.extends.as_ref() else {
+            return Ok(false);
+        };
+        let base = source_type_name(ts, res);
+        if base == "UnityEngine.MonoBehaviour" {
+            return Ok(true);
+        }
+        if BASE_STOP.contains(&base.as_str()) {
+            return Ok(false);
+        }
+        match self.resolve_source_in(ts, &TypeCtx::root(res))? {
+            Some(base) => self.derives_from_monobehaviour(base.res, base.def),
+            None => Ok(false),
+        }
+    }
+
     fn derives_from_ueobject(
         &self,
         res: &'static Resolution<'static>,

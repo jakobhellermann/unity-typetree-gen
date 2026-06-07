@@ -121,6 +121,40 @@ impl AssemblyTypeTreeGenerator {
         Ok(children.map(|children| crate::assemble(children, type_name)))
     }
 
+    /// Pre-load an assembly by name so it is available to [`monobehaviour_definitions`].
+    /// Returns `true` if the assembly was found and loaded (or was already cached),
+    /// `false` if the loader reports it is absent.
+    pub fn load_assembly(&self, loader: &Loader, name: &str) -> Result<bool, io::Error> {
+        self.resolution(name, loader).map(|r| r.is_some())
+    }
+
+    /// Returns `(assembly_name, full_type_name)` pairs for every type in the
+    /// currently-loaded assemblies that derives (directly or transitively) from
+    /// `UnityEngine.MonoBehaviour`. Base types in other assemblies are resolved
+    /// on demand through `loader`.
+    pub fn monobehaviour_definitions(
+        &self,
+        loader: &Loader,
+    ) -> Result<Vec<(String, String)>, io::Error> {
+        let g = crate::generator::Generator::new(self, &self.unity_version, loader);
+        let resolutions: Vec<(String, &'static Resolution<'static>)> = self
+            .resolutions
+            .lock()
+            .unwrap()
+            .iter()
+            .map(|(k, v)| (k.clone(), *v))
+            .collect();
+        let mut defs = Vec::new();
+        for (asm_name, res) in &resolutions {
+            for td in &res.type_definitions {
+                if g.derives_from_monobehaviour(res, td)? {
+                    defs.push((asm_name.clone(), td.type_name()));
+                }
+            }
+        }
+        Ok(defs)
+    }
+
     /// Convenience: generate using a loader that reads `<managed_dir>/<name>`.
     pub fn generate_from_dir(
         &self,
