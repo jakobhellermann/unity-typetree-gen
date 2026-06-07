@@ -253,6 +253,10 @@ namespace Fixtures
             public float y;
         }
 
+        // A nested MonoBehaviour — must NOT appear in monobehaviour_definitions
+        // because Mono.Cecil's Types only yields top-level types.
+        public class NestedMonoBehaviour : MonoBehaviour { }
+
         public Inner inner;
         public int tag;
     }

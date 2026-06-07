@@ -310,6 +310,31 @@ fn monobehaviour_definitions_matches_csharp_snapshots() {
     assert_eq!(rust_names, cs_names);
 }
 
+/// `Outer.NestedMonoBehaviour` is a MonoBehaviour nested inside `Outer` (a plain
+/// serializable class). It must NOT appear in `monobehaviour_definitions` because
+/// Mono.Cecil's `Types` only yields top-level types, not nested ones.
+#[test]
+fn monobehaviour_definitions_excludes_nested_monobehaviours() {
+    let generator = new_generator(VERSIONS[0]);
+    generator
+        .load_assembly(&fixture_loader, "Fixtures.dll")
+        .expect("load Fixtures.dll");
+    generator
+        .load_assembly(&fixture_loader, "UnityEngine.CoreModule.dll")
+        .expect("load CoreModule");
+
+    let defs = generator
+        .monobehaviour_definitions(&fixture_loader)
+        .expect("monobehaviour_definitions");
+
+    let names = def_names(&defs);
+    // Nested types have no namespace in .NET metadata, so the name has no prefix.
+    assert!(
+        !names.contains("NestedMonoBehaviour"),
+        "nested MonoBehaviour must not be returned"
+    );
+}
+
 /// MonoBehaviour itself and all its ancestors (Behaviour, Component, Object)
 /// must not appear, even when CoreModule is loaded. Only types that *derive from*
 /// MonoBehaviour (not MonoBehaviour itself) are returned.
