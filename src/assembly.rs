@@ -9,7 +9,7 @@
 //! referenced by a MonoBehaviour are ever loaded.
 //!
 //! [`generate`]: AssemblyTypeTreeGenerator::generate
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::io;
 use std::path::Path;
 use std::sync::Mutex;
@@ -128,14 +128,14 @@ impl AssemblyTypeTreeGenerator {
         self.resolution(name, loader).map(|r| r.is_some())
     }
 
-    /// Returns `(assembly_name, full_type_name)` pairs for every type in the
-    /// currently-loaded assemblies that derives (directly or transitively) from
-    /// `UnityEngine.MonoBehaviour`. Base types in other assemblies are resolved
-    /// on demand through `loader`.
+    /// Returns a map from assembly name to the list of full type names for every
+    /// type in the currently-loaded assemblies that derives (directly or
+    /// transitively) from `UnityEngine.MonoBehaviour`. Base types in other
+    /// assemblies are resolved on demand through `loader`.
     pub fn monobehaviour_definitions(
         &self,
         loader: &Loader,
-    ) -> Result<Vec<(String, String)>, io::Error> {
+    ) -> Result<BTreeMap<String, Vec<String>>, io::Error> {
         let g = crate::generator::Generator::new(self, &self.unity_version, loader);
         let resolutions: Vec<(String, &'static Resolution<'static>)> = self
             .resolutions
@@ -144,7 +144,7 @@ impl AssemblyTypeTreeGenerator {
             .iter()
             .map(|(k, v)| (k.clone(), *v))
             .collect();
-        let mut defs = Vec::new();
+        let mut defs: BTreeMap<String, Vec<String>> = BTreeMap::new();
         for (asm_name, res) in &resolutions {
             for td in &res.type_definitions {
                 // Mono.Cecil's Types (used by the reference C# impl) only yields
@@ -153,7 +153,7 @@ impl AssemblyTypeTreeGenerator {
                     continue;
                 }
                 if g.derives_from_monobehaviour(res, td)? {
-                    defs.push((asm_name.clone(), td.type_name()));
+                    defs.entry(asm_name.clone()).or_default().push(td.type_name());
                 }
             }
         }

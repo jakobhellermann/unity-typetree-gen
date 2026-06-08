@@ -263,9 +263,8 @@ snapshot_tests! {
 
 // --- monobehaviour_definitions tests ---
 
-/// Returns the type-name portion from each `(assembly, type_name)` pair.
-fn def_names(defs: &[(String, String)]) -> std::collections::HashSet<&str> {
-    defs.iter().map(|(_, n)| n.as_str()).collect()
+fn def_names(defs: &std::collections::BTreeMap<String, Vec<String>>) -> std::collections::HashSet<&str> {
+    defs.values().flatten().map(|s| s.as_str()).collect()
 }
 
 /// Cross-check Rust `monobehaviour_definitions` against the C#-generated snapshot list.
@@ -290,7 +289,7 @@ fn monobehaviour_definitions_matches_csharp_snapshots() {
         .monobehaviour_definitions(&fixture_loader)
         .expect("monobehaviour_definitions");
 
-    let mut rust_names: Vec<String> = defs.into_iter().map(|(_, n)| n).collect();
+    let mut rust_names: Vec<String> = defs.into_values().flatten().collect();
     rust_names.sort();
 
     // Read the snapshot filenames — these are what C# determined to be MonoBehaviours.
