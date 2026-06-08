@@ -10,7 +10,6 @@
 //!
 //! [`generate`]: AssemblyTypeTreeGenerator::generate
 use std::collections::{BTreeMap, HashMap};
-use std::io;
 use std::path::Path;
 use std::sync::Mutex;
 
@@ -21,18 +20,35 @@ use rabex::UnityVersion;
 use crate::TypeTreeNode;
 use crate::generator::Generator;
 
-/// Resolves an assembly's bytes by name (e.g. reading the file from a game's
-/// `Managed` directory), passed to [`generate`](AssemblyTypeTreeGenerator::generate)
-/// on each call so it can borrow a resolver without the generator owning it. A
-/// `NotFound` error means "no such assembly" (treated as absent, not an error);
-/// any other `io::Error` is propagated.
-pub type Loader<'a> = dyn Fn(&str) -> Result<Vec<u8>, io::Error> + 'a;
+/// Resolves an assembly's bytes by name
+///
+/// Usually given assembly name like `Assembly-CSharp.dll` it ould read the bytes
+/// from `game_Data/Managed/Assembly-CSharp.dll`.
+/// Can return `std::io::ErrorKind::NotFound` to signal absence.
+pub type Loader<'a> = dyn Fn(&str) -> Result<Vec<u8>, std::io::Error> + 'a;
 
 /// A parsed-assembly cache that generates MonoBehaviour type trees for a fixed
 /// Unity version.
 ///
 /// Assembly bytes and parsed resolutions are leaked to obtain `'static`
 /// lifetimes; this is meant for a generator built once per game environment.
+///
+/// # Example
+///
+/// ```no_run
+/// # use std::path::Path;
+/// # use unity_typetree_gen::AssemblyTypeTreeGenerator;
+/// let version = "6000.0.0f1".parse().unwrap();
+/// let generator = AssemblyTypeTreeGenerator::new(version);
+///
+/// let managed_dir = Path::new("/path/to/Game_Data/Managed");
+/// let tree = generator
+///     .generate_from_dir(managed_dir, "Assembly-CSharp.dll", "MyGame", "PlayerController")?
+///     .expect("assembly or type not found");
+///
+/// println!("{} fields", tree.children.len());
+/// # Ok::<(), std::io::Error>(())
+/// ```
 pub struct AssemblyTypeTreeGenerator {
     /// Assembly bytes, loaded lazily and cached (leaked) on first use.
     bytes: Mutex<HashMap<String, &'static [u8]>>,
@@ -56,14 +72,14 @@ impl AssemblyTypeTreeGenerator {
         &self,
         assembly_name: &str,
         loader: &Loader,
-    ) -> Result<Option<&'static [u8]>, io::Error> {
+    ) -> Result<Option<&'static [u8]>, std::io::Error> {
         let mut bytes = self.bytes.lock().unwrap();
         if let Some(b) = bytes.get(assembly_name) {
             return Ok(Some(b));
         }
         let loaded = match loader(assembly_name) {
             Ok(loaded) => loaded,
-            Err(e) if e.kind() == io::ErrorKind::NotFound => return Ok(None),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
             Err(e) => return Err(e),
         };
         let leaked: &'static [u8] = Vec::leak(loaded);
@@ -77,7 +93,7 @@ impl AssemblyTypeTreeGenerator {
         &self,
         assembly_name: &str,
         loader: &Loader,
-    ) -> Result<Option<&'static Resolution<'static>>, io::Error> {
+    ) -> Result<Option<&'static Resolution<'static>>, std::io::Error> {
         if let Some(resolution) = self.resolutions.lock().unwrap().get(assembly_name) {
             return Ok(Some(resolution));
         }
@@ -101,8 +117,7 @@ impl AssemblyTypeTreeGenerator {
     }
 
     /// Generate the type tree for `namespace.type_name` defined in
-    /// `assembly_name`. Assemblies (the primary and any cross-assembly field
-    /// types) are resolved on demand through `loader`.
+    /// `assembly_name`. The assembly, as well as possible references assemblies, are resolved on demand through `loader`.
     ///
     /// `Ok(None)` if the type can't be resolved (assembly or type absent);
     /// `Err` if the loader itself fails (other than `NotFound`).
@@ -112,7 +127,7 @@ impl AssemblyTypeTreeGenerator {
         assembly_name: &str,
         namespace: &str,
         type_name: &str,
-    ) -> Result<Option<TypeTreeNode>, io::Error> {
+    ) -> Result<Option<TypeTreeNode>, std::io::Error> {
         let Some(primary) = self.resolution(assembly_name, loader)? else {
             return Ok(None);
         };
@@ -121,21 +136,36 @@ impl AssemblyTypeTreeGenerator {
         Ok(children.map(|children| crate::assemble(children, type_name)))
     }
 
-    /// Pre-load an assembly by name so it is available to [`monobehaviour_definitions`].
+    /// Convenience: generate using a loader that reads `<managed_dir>/<name>`.
+    pub fn generate_from_dir(
+        &self,
+        managed_dir: &Path,
+        assembly_name: &str,
+        namespace: &str,
+        type_name: &str,
+    ) -> Result<Option<TypeTreeNode>, std::io::Error> {
+        self.generate(
+            &|name| std::fs::read(managed_dir.join(name)),
+            assembly_name,
+            namespace,
+            type_name,
+        )
+    }
+
+    /// Pre-load an assembly by name so it is available to [`monobehaviour_definitions`](Self::monobehaviour_definitions).
     /// Returns `true` if the assembly was found and loaded (or was already cached),
     /// `false` if the loader reports it is absent.
-    pub fn load_assembly(&self, loader: &Loader, name: &str) -> Result<bool, io::Error> {
+    pub fn load_assembly(&self, loader: &Loader, name: &str) -> Result<bool, std::io::Error> {
         self.resolution(name, loader).map(|r| r.is_some())
     }
 
     /// Returns a map from assembly name to the list of full type names for every
     /// type in the currently-loaded assemblies that derives (directly or
-    /// transitively) from `UnityEngine.MonoBehaviour`. Base types in other
-    /// assemblies are resolved on demand through `loader`.
+    /// transitively) from `UnityEngine.MonoBehaviour`.
     pub fn monobehaviour_definitions(
         &self,
         loader: &Loader,
-    ) -> Result<BTreeMap<String, Vec<String>>, io::Error> {
+    ) -> Result<BTreeMap<String, Vec<String>>, std::io::Error> {
         let g = crate::generator::Generator::new(self, &self.unity_version, loader);
         let resolutions: Vec<(String, &'static Resolution<'static>)> = self
             .resolutions
@@ -153,26 +183,12 @@ impl AssemblyTypeTreeGenerator {
                     continue;
                 }
                 if g.derives_from_monobehaviour(res, td)? {
-                    defs.entry(asm_name.clone()).or_default().push(td.type_name());
+                    defs.entry(asm_name.clone())
+                        .or_default()
+                        .push(td.type_name());
                 }
             }
         }
         Ok(defs)
-    }
-
-    /// Convenience: generate using a loader that reads `<managed_dir>/<name>`.
-    pub fn generate_from_dir(
-        &self,
-        managed_dir: &Path,
-        assembly_name: &str,
-        namespace: &str,
-        type_name: &str,
-    ) -> Result<Option<TypeTreeNode>, io::Error> {
-        self.generate(
-            &|name| std::fs::read(managed_dir.join(name)),
-            assembly_name,
-            namespace,
-            type_name,
-        )
     }
 }
