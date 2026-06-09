@@ -16,8 +16,8 @@ use template::TemplateField;
 /// Align flag set on a node whose value is 4-byte aligned after writing.
 const ALIGN_FLAG: i32 = 0x4000;
 
-/// Wrap a script's serialized fields in the `Base` root (type = the class name,
-/// level 0) and build the [`TypeTreeNode`] tree directly.
+/// Wrap a script's serialized fields in the `Base` root (type = the class name)
+/// and build the [`TypeTreeNode`] tree directly.
 pub(crate) fn assemble(children: Vec<TemplateField>, type_name: &str) -> TypeTreeNode {
     let base = TemplateField {
         name: "Base".to_string(),
@@ -25,20 +25,15 @@ pub(crate) fn assemble(children: Vec<TemplateField>, type_name: &str) -> TypeTre
         aligned: false,
         children,
     };
-    build_node(&base, 0)
+    build_node(&base)
 }
 
-fn build_node(field: &TemplateField, level: u8) -> TypeTreeNode {
+fn build_node(field: &TemplateField) -> TypeTreeNode {
     TypeTreeNode {
         m_Type: field.ty.clone(),
         m_Name: field.name.clone(),
-        m_Level: level,
         m_MetaFlag: Some(if field.aligned { ALIGN_FLAG } else { 0 }),
-        children: field
-            .children
-            .iter()
-            .map(|child| build_node(child, level + 1))
-            .collect(),
+        children: field.children.iter().map(build_node).collect(),
         ..Default::default()
     }
 }
