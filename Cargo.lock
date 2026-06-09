@@ -36,9 +36,9 @@ dependencies = [
 
 [[package]]
 name = "bitflags"
-version = "2.12.1"
+version = "2.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "84d7ced0ae9557296835c32bf1b1e02b44c746701f898460fb000d7eaa84f00a"
+checksum = "b4388bee8683e3d04af747c73422af53102d2bd24d9eadb6cbc100baef4b43f8"
 
 [[package]]
 name = "bitvec"
@@ -336,7 +336,7 @@ dependencies = [
 [[package]]
 name = "rabex"
 version = "0.0.3"
-source = "git+https://github.com/jakobhellermann/RustyAssetBundleEXtractor#0333df164aa034d13cd78647949b831961695214"
+source = "git+https://github.com/jakobhellermann/RustyAssetBundleEXtractor?branch=remove-tt-level-index#a32fc38e5d2d355eacaf588ca294d64639ba6049"
 dependencies = [
  "bitflags",
  "byteorder",
