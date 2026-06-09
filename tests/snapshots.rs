@@ -24,18 +24,18 @@ struct Node {
 
 fn flatten(tree: &TypeTreeNode) -> Vec<Node> {
     let mut out = Vec::new();
-    fn walk(node: &TypeTreeNode, out: &mut Vec<Node>) {
+    fn walk(node: &TypeTreeNode, level: u8, out: &mut Vec<Node>) {
         out.push(Node {
             m_Type: node.m_Type.clone(),
             m_Name: node.m_Name.clone(),
-            m_Level: node.m_Level,
+            m_Level: level,
             m_MetaFlag: node.m_MetaFlag.unwrap_or(0),
         });
         for child in &node.children {
-            walk(child, out);
+            walk(child, level + 1, out);
         }
     }
-    walk(tree, &mut out);
+    walk(tree, 0, &mut out);
     out
 }
 
