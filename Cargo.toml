@@ -4,6 +4,11 @@ version = "0.1.0"
 edition = "2024"
 description = "Generate Unity MonoBehaviour type trees from .NET assemblies, in pure Rust (via dotnetdll). A port of AssetsTools.NET's MonoCecilTempGenerator."
 license = "MIT"
+authors = ["Jakob Hellermann <jakobhellermann@protonmail.com>"]
+documentation = "https://docs.rs/unity-typetree-gen"
+repository = "https://github.com/jakobhellermann/unity-typetree-gen"
+keywords = ["unity", "typetree", "generate"]
+categories = ["game-development"]
 
 [dependencies]
 dotnetdll = "0.2"
