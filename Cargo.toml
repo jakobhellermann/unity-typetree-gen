@@ -6,8 +6,8 @@ description = "Generate Unity MonoBehaviour type trees from .NET assemblies, in 
 license = "MIT"
 
 [dependencies]
-dotnetdll = "0.1"
-rabex = { git = "https://github.com/jakobhellermann/RustyAssetBundleEXtractor", default-features = false }
+dotnetdll = "0.2"
+rabex = { version = "0.1", default-features = false }
 
 [dev-dependencies]
 serde = { version = "1.0", features = ["derive"] }
