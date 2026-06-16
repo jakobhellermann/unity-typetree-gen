@@ -13,6 +13,7 @@
 //! generic base class binding its own parameters (`Derived<T> : Base<T>`)
 //! propagates the argument into the base's fields.
 use std::io;
+use std::rc::Rc;
 
 use crate::assembly::AssemblyTypeTreeGenerator;
 use crate::template::*;
@@ -58,14 +59,14 @@ struct GenericArg {
 #[derive(Clone)]
 struct TypeCtx {
     res: &'static Resolution<'static>,
-    args: std::rc::Rc<[GenericArg]>,
+    args: Rc<[GenericArg]>,
 }
 
 impl TypeCtx {
     fn root(res: &'static Resolution<'static>) -> Self {
         TypeCtx {
             res,
-            args: std::rc::Rc::from([]),
+            args: Rc::from([]),
         }
     }
 }
