@@ -104,6 +104,8 @@ impl AssemblyTypeTreeGenerator {
         // method bodies avoids the expensive part of parsing large assemblies.
         let options = ReadOptions {
             skip_method_bodies: true,
+            lazy_method_bodies: false,
+            lazy_method_signatures: true,
         };
         let Ok(resolution) = Resolution::parse(bytes, options) else {
             return Ok(None);
