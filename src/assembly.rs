@@ -102,10 +102,12 @@ impl AssemblyTypeTreeGenerator {
         };
         // Type trees only need type/field metadata, never method IL — skipping
         // method bodies avoids the expensive part of parsing large assemblies.
+        #[allow(clippy::needless_update)] // improves patchability
         let options = ReadOptions {
             skip_method_bodies: true,
             lazy_method_bodies: false,
             lazy_method_signatures: true,
+            ..Default::default()
         };
         let Ok(resolution) = Resolution::parse(bytes, options) else {
             return Ok(None);
