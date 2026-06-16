@@ -1,6 +1,6 @@
 [package]
 name = "unity-typetree-gen"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 description = "Generate Unity MonoBehaviour type trees from .NET assemblies, in pure Rust (via dotnetdll). A port of AssetsTools.NET's MonoCecilTempGenerator."
 license = "MIT"
