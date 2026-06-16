@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 // Dump the generated type tree for one MonoBehaviour.
 // usage: dump <managed-dir> <unity-version> <assembly.dll> <Namespace.Class>
 use unity_typetree_gen::AssemblyTypeTreeGenerator;
@@ -11,7 +13,7 @@ fn main() {
         .expect("invalid unity version (e.g. 6000.0.0f1)");
     // Resolve assemblies lazily from the Managed directory: only the DLLs
     // actually referenced by the requested MonoBehaviour are read and parsed.
-    let managed_dir = std::path::PathBuf::from(managed_dir);
+    let managed_dir = PathBuf::from(managed_dir);
     let generator = AssemblyTypeTreeGenerator::new(version);
 
     let (namespace, type_name) = full_name.rsplit_once('.').unwrap_or(("", full_name));

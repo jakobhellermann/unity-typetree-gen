@@ -1,4 +1,3 @@
-// TODO(ai-review): review for style and correctness
 //! Generate Unity [`TypeTreeNode`] trees for `MonoBehaviour` and `ScriptableObject`
 //! scripts directly from a game's .NET assemblies.
 //!

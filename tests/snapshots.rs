@@ -5,8 +5,9 @@
 //!
 //! Regenerate the inputs with `just regen` (rebuilds Fixtures.dll and the
 //! snapshots); both are committed so `cargo test` needs no .NET toolchain.
-use std::fs;
+use std::collections::BTreeMap;
 use std::path::Path;
+use std::{cell::RefCell, fs};
 
 use serde::Deserialize;
 use unity_typetree_gen::{AssemblyTypeTreeGenerator, TypeTreeNode};
@@ -205,8 +206,6 @@ fn nested_type_not_matched_as_top_level() {
 /// assembly must not load the UnityEngine stubs.
 #[test]
 fn lazy_loader_only_loads_what_is_used() {
-    use std::cell::RefCell;
-
     let loaded = RefCell::new(Vec::new());
     let loader = |name: &str| -> Result<Vec<u8>, std::io::Error> {
         loaded.borrow_mut().push(name.to_string());
@@ -263,7 +262,7 @@ snapshot_tests! {
 
 // --- monobehaviour_definitions tests ---
 
-fn def_names(defs: &std::collections::BTreeMap<String, Vec<String>>) -> std::collections::HashSet<&str> {
+fn def_names(defs: &BTreeMap<String, Vec<String>>) -> std::collections::HashSet<&str> {
     defs.values().flatten().map(|s| s.as_str()).collect()
 }
 
@@ -279,7 +278,11 @@ fn def_names(defs: &std::collections::BTreeMap<String, Vec<String>>) -> std::col
 #[test]
 fn monobehaviour_definitions_matches_csharp_snapshots() {
     let generator = new_generator(VERSIONS[0]);
-    for asm in &["Fixtures.dll", "UnityEngine.dll", "UnityEngine.CoreModule.dll"] {
+    for asm in &[
+        "Fixtures.dll",
+        "UnityEngine.dll",
+        "UnityEngine.CoreModule.dll",
+    ] {
         generator
             .load_assembly(&fixture_loader, asm)
             .unwrap_or_else(|e| panic!("load {asm}: {e}"));
