@@ -138,7 +138,7 @@ impl AssemblyTypeTreeGenerator {
         Ok(children.map(|children| crate::assemble(children, type_name)))
     }
 
-    /// Convenience: generate using a loader that reads `<managed_dir>/<name>`.
+    /// Convenience: generate using a loader that reads `<managed_dir>/<assembly_name>`.
     pub fn generate_from_dir(
         &self,
         managed_dir: &Path,
