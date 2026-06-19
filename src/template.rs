@@ -146,19 +146,12 @@ pub(crate) fn string_children() -> Vec<TemplateField> {
     array_of(cchar("data"))
 }
 
-/// `Array(field)`: a single always-aligned `Array` node wrapping `size` and a
-/// `data` element carrying `field`'s type/children (the element's own align is
-/// dropped, matching the C# 4-arg `CreateTemplateField`).
+/// `Array(field)`: an `Array` node wrapping `size` and a `data` element carrying `field`'s type/children. The Array's
+/// alignment is NOT decided here — `build_node` sets it from the element kind via rabex's `classify()` (Unity aligns
+/// arrays of scalars/strings, not arrays of structs). The element's own align is dropped.
 fn array_of(field: TemplateField) -> Vec<TemplateField> {
-    vec![node(
-        "Array",
-        "Array",
-        true,
-        vec![
-            int_f("size"),
-            node("data", &field.ty, false, field.children),
-        ],
-    )]
+    let data = node("data", &field.ty, false, field.children);
+    vec![node("Array", "Array", false, vec![int_f("size"), data])]
 }
 
 /// `Vector(field)`: a `vector` node whose element is `field`.
