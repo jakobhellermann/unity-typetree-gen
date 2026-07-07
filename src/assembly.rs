@@ -11,7 +11,7 @@
 //! [`generate`]: AssemblyTypeTreeGenerator::generate
 use std::collections::{BTreeMap, HashMap};
 use std::path::Path;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
 use dotnetdll::prelude::{ReadOptions, Resolution};
 
@@ -53,6 +53,9 @@ pub struct AssemblyTypeTreeGenerator {
     /// Assembly bytes, loaded lazily and cached (leaked) on first use.
     bytes: Mutex<HashMap<String, &'static [u8]>>,
     resolutions: Mutex<HashMap<String, &'static Resolution<'static>>>,
+    /// Per-assembly locks for single-flight parsing: concurrent callers for the same
+    /// assembly wait for the first to parse instead of all parsing it in parallel.
+    locks: Mutex<HashMap<String, Arc<Mutex<()>>>>,
     unity_version: UnityVersion,
 }
 
@@ -61,6 +64,7 @@ impl AssemblyTypeTreeGenerator {
         AssemblyTypeTreeGenerator {
             bytes: Mutex::new(HashMap::new()),
             resolutions: Mutex::new(HashMap::new()),
+            locks: Mutex::new(HashMap::new()),
             unity_version,
         }
     }
@@ -94,6 +98,17 @@ impl AssemblyTypeTreeGenerator {
         assembly_name: &str,
         loader: &Loader,
     ) -> Result<Option<&'static Resolution<'static>>, std::io::Error> {
+        if let Some(resolution) = self.resolutions.lock().unwrap().get(assembly_name) {
+            return Ok(Some(resolution));
+        }
+        // Single-flight: only one thread parses a given assembly. Concurrent callers for the
+        // same assembly block on this per-assembly lock, then hit the cache on the re-check
+        // below — avoiding a parse stampede when a parallel scan first touches an assembly.
+        let assembly_lock = {
+            let mut locks = self.locks.lock().unwrap();
+            Arc::clone(locks.entry(assembly_name.to_owned()).or_default())
+        };
+        let _flight = assembly_lock.lock().unwrap();
         if let Some(resolution) = self.resolutions.lock().unwrap().get(assembly_name) {
             return Ok(Some(resolution));
         }
