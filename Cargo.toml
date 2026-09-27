@@ -11,7 +11,7 @@ keywords = ["unity", "typetree", "generate"]
 categories = ["game-development"]
 
 [dependencies]
-dotnetdll = "0.2"
+dotnetdll = "0.3"
 rabex = { version = "0.2", default-features = false }
 
 [dev-dependencies]
