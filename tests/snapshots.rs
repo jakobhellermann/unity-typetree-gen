@@ -6,11 +6,24 @@
 //! Regenerate the inputs with `just regen` (rebuilds Fixtures.dll and the
 //! snapshots); both are committed so `cargo test` needs no .NET toolchain.
 use std::collections::BTreeMap;
+use std::fmt::Write as _;
 use std::path::Path;
 use std::{cell::RefCell, fs};
 
 use serde::Deserialize;
+use similar::TextDiff;
 use unity_typetree_gen::{AssemblyTypeTreeGenerator, TypeTreeNode};
+
+fn dump(nodes: &[Node]) -> String {
+    let mut out = String::new();
+    for n in nodes {
+        for _ in 0..n.m_Level {
+            out.push_str("  ");
+        }
+        writeln!(out, "{} {} [flags={}]", n.m_Type, n.m_Name, n.m_MetaFlag).unwrap();
+    }
+    out
+}
 
 /// A flattened node, matching the snapshot JSON (the AssetsTools.NET reference),
 /// so a generated tree can be compared depth-first against it.
@@ -140,11 +153,16 @@ fn check_in(assembly: &str, full_name: &str) {
             .expect("load error")
             .unwrap_or_else(|| panic!("generate {full_name} @ {version}"));
         let want = load_snapshot(version, full_name);
-        assert_eq!(
-            flatten(&got),
-            want,
-            "type tree mismatch for {full_name} @ {version}"
-        );
+        let got = flatten(&got);
+        if got != want {
+            panic!(
+                "type tree mismatch for {full_name} @ {version}\n{}",
+                TextDiff::from_lines(&dump(&want), &dump(&got))
+                    .unified_diff()
+                    .context_radius(3)
+                    .header("expected (snapshot)", "actual (generated)")
+            );
+        }
     }
 }
 
