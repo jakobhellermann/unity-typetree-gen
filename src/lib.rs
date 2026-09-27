@@ -40,8 +40,6 @@ fn build_node(field: &TemplateField) -> TypeTreeNode {
         ..Default::default()
     };
     node.m_ByteSize = byte_size(&node);
-    // Unity aligns an `Array` node iff its element is a scalar or a string (validated against Unity's embedded type
-    // trees); arrays of structs/classes/PPtrs are not aligned. Decided here via rabex's `classify()` on the element.
     if node.m_Type == "Array" {
         // m_TypeFlags=1 marks this node as an array; without it Unity won't iterate it (re-reads element 0 for every
         // entry, e.g. a vector<string> comes back as N copies of the first string).
@@ -57,7 +55,7 @@ fn build_node(field: &TemplateField) -> TypeTreeNode {
 
 /// Whether an `Array` node's element (`data` child) is the kind Unity 4-byte aligns: a scalar, a `string`, or a pure
 /// POD struct (every field transitively a scalar — e.g. Vector3f/ColorRGBA/Quaternionf/Keyframe). Arrays of structs
-/// that hold a PPtr or string (PPtr itself, or custom classes) are NOT aligned. Validated against Unity's embedded trees.
+/// that hold a PPtr or string (PPtr itself, or custom classes) are NOT aligned. Validated against Unity 6000 type trees.
 fn array_element_aligned(array_node: &TypeTreeNode) -> bool {
     array_node
         .children
