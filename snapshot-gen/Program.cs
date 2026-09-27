@@ -32,7 +32,7 @@ foreach (string dllPath in Directory.GetFiles(managedDir, "*.dll"))
     try { module = ModuleDefinition.ReadModule(dllPath, readerParams); }
     catch { continue; }
 
-    foreach (TypeDefinition type in module.GetTypes())
+    foreach (TypeDefinition type in module.Types)
     {
         if (!IsMonoBehaviour(type))
             continue;
