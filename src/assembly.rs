@@ -14,6 +14,8 @@ use std::path::Path;
 use std::sync::{Arc, Mutex};
 
 use dotnetdll::prelude::{ReadOptions, Resolution};
+use elsa::sync::FrozenMap;
+use self_cell::self_cell;
 
 use rabex::UnityVersion;
 
@@ -27,11 +29,18 @@ use crate::generator::Generator;
 /// Can return `std::io::ErrorKind::NotFound` to signal absence.
 pub type Loader<'a> = dyn Fn(&str) -> Result<Vec<u8>, std::io::Error> + 'a;
 
+self_cell!(
+    /// An assembly's bytes together with the resolution parsed from (and borrowing) them.
+    struct LoadedAssembly {
+        owner: Box<[u8]>,
+
+        #[covariant]
+        dependent: Resolution,
+    }
+);
+
 /// A parsed-assembly cache that generates MonoBehaviour type trees for a fixed
 /// Unity version.
-///
-/// Assembly bytes and parsed resolutions are leaked to obtain `'static`
-/// lifetimes; this is meant for a generator built once per game environment.
 ///
 /// # Example
 ///
@@ -50,9 +59,8 @@ pub type Loader<'a> = dyn Fn(&str) -> Result<Vec<u8>, std::io::Error> + 'a;
 /// # Ok::<(), std::io::Error>(())
 /// ```
 pub struct AssemblyTypeTreeGenerator {
-    /// Assembly bytes, loaded lazily and cached (leaked) on first use.
-    bytes: Mutex<HashMap<String, &'static [u8]>>,
-    resolutions: Mutex<HashMap<String, &'static Resolution<'static>>>,
+    /// Append-only, so references into an entry stay valid for as long as the generator lives.
+    assemblies: FrozenMap<String, Box<LoadedAssembly>>,
     /// Per-assembly locks for single-flight parsing: concurrent callers for the same
     /// assembly wait for the first to parse instead of all parsing it in parallel.
     locks: Mutex<HashMap<String, Arc<Mutex<()>>>>,
@@ -62,44 +70,21 @@ pub struct AssemblyTypeTreeGenerator {
 impl AssemblyTypeTreeGenerator {
     pub fn new(unity_version: UnityVersion) -> Self {
         AssemblyTypeTreeGenerator {
-            bytes: Mutex::new(HashMap::new()),
-            resolutions: Mutex::new(HashMap::new()),
+            assemblies: FrozenMap::new(),
             locks: Mutex::new(HashMap::new()),
             unity_version,
         }
     }
 
-    /// Bytes for `assembly_name`: cached first, otherwise via `loader` (whose
-    /// result is leaked and cached so it runs at most once per assembly).
-    /// `Ok(None)` if the loader reports the assembly is absent (`NotFound`).
-    fn assembly_bytes(
-        &self,
+    /// Parsed resolution for `assembly_name`, loading and parsing it on first
+    /// access. `Ok(None)` if the loader reports the assembly is absent (`NotFound`).
+    pub(crate) fn resolution<'r>(
+        &'r self,
         assembly_name: &str,
         loader: &Loader,
-    ) -> Result<Option<&'static [u8]>, std::io::Error> {
-        let mut bytes = self.bytes.lock().unwrap();
-        if let Some(b) = bytes.get(assembly_name) {
-            return Ok(Some(b));
-        }
-        let loaded = match loader(assembly_name) {
-            Ok(loaded) => loaded,
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
-            Err(e) => return Err(e),
-        };
-        let leaked: &'static [u8] = Vec::leak(loaded);
-        bytes.insert(assembly_name.to_owned(), leaked);
-        Ok(Some(leaked))
-    }
-
-    /// Parsed resolution for `assembly_name`, parsing (and caching) it on first
-    /// access. `Ok(None)` if the assembly is absent or fails to parse.
-    pub(crate) fn resolution(
-        &self,
-        assembly_name: &str,
-        loader: &Loader,
-    ) -> Result<Option<&'static Resolution<'static>>, std::io::Error> {
-        if let Some(resolution) = self.resolutions.lock().unwrap().get(assembly_name) {
-            return Ok(Some(resolution));
+    ) -> Result<Option<&'r Resolution<'r>>, std::io::Error> {
+        if let Some(assembly) = self.assemblies.get(assembly_name) {
+            return Ok(Some(assembly.borrow_dependent()));
         }
         // Single-flight: only one thread parses a given assembly. Concurrent callers for the
         // same assembly block on this per-assembly lock, then hit the cache on the re-check
@@ -109,11 +94,13 @@ impl AssemblyTypeTreeGenerator {
             Arc::clone(locks.entry(assembly_name.to_owned()).or_default())
         };
         let _flight = assembly_lock.lock().unwrap();
-        if let Some(resolution) = self.resolutions.lock().unwrap().get(assembly_name) {
-            return Ok(Some(resolution));
+        if let Some(assembly) = self.assemblies.get(assembly_name) {
+            return Ok(Some(assembly.borrow_dependent()));
         }
-        let Some(bytes) = self.assembly_bytes(assembly_name, loader)? else {
-            return Ok(None);
+        let bytes = match loader(assembly_name) {
+            Ok(bytes) => bytes,
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+            Err(e) => return Err(e),
         };
         // Type trees only need type/field metadata, never method IL — skipping
         // method bodies avoids the expensive part of parsing large assemblies.
@@ -124,22 +111,26 @@ impl AssemblyTypeTreeGenerator {
             lazy_method_signatures: true,
             ..Default::default()
         };
-        let Ok(resolution) = Resolution::parse(bytes, options) else {
-            return Ok(None);
-        };
-        let leaked: &'static Resolution<'static> = Box::leak(Box::new(resolution));
-        self.resolutions
-            .lock()
-            .unwrap()
-            .insert(assembly_name.to_owned(), leaked);
-        Ok(Some(leaked))
+        let assembly = LoadedAssembly::try_new(bytes.into_boxed_slice(), |bytes| {
+            Resolution::parse(bytes, options)
+        })
+        .map_err(|e| {
+            std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                format!("failed to parse {assembly_name}: {e}"),
+            )
+        })?;
+        let assembly = self
+            .assemblies
+            .insert(assembly_name.to_owned(), Box::new(assembly));
+        Ok(Some(assembly.borrow_dependent()))
     }
 
     /// Generate the type tree for `namespace.type_name` defined in
     /// `assembly_name`. The assembly, as well as possible references assemblies, are resolved on demand through `loader`.
     ///
     /// `Ok(None)` if the type can't be resolved (assembly or type absent);
-    /// `Err` if the loader itself fails (other than `NotFound`).
+    /// `Err` if the loader fails (other than `NotFound`) or an assembly fails to parse.
     pub fn generate(
         &self,
         loader: &Loader,
@@ -186,15 +177,9 @@ impl AssemblyTypeTreeGenerator {
         loader: &Loader,
     ) -> Result<BTreeMap<String, Vec<String>>, std::io::Error> {
         let g = crate::generator::Generator::new(self, &self.unity_version, loader);
-        let resolutions: Vec<(String, &'static Resolution<'static>)> = self
-            .resolutions
-            .lock()
-            .unwrap()
-            .iter()
-            .map(|(k, v)| (k.clone(), *v))
-            .collect();
         let mut defs: BTreeMap<String, Vec<String>> = BTreeMap::new();
-        for (asm_name, res) in &resolutions {
+        for asm_name in self.assemblies.keys_cloned() {
+            let res = self.assemblies.get(&asm_name).unwrap().borrow_dependent();
             for td in &res.type_definitions {
                 // Mono.Cecil's Types (used by the reference C# impl) only yields
                 // top-level types; skip nested types to match that behaviour.

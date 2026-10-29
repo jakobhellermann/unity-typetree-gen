@@ -37,18 +37,15 @@ const BASE_STOP: &[&str] = &[
 
 /// A resolved type: its definition together with the resolution (assembly) it
 /// lives in, so further references can be resolved relative to it.
-type Resolved = (
-    &'static Resolution<'static>,
-    &'static TypeDefinition<'static>,
-);
+type Resolved<'r> = (&'r Resolution<'r>, &'r TypeDefinition<'r>);
 
 /// A concrete generic argument: the member type bound to a type parameter,
 /// together with the context it must itself be read in (its instantiation
 /// site's assembly and any further argument bindings).
 #[derive(Clone)]
-struct GenericArg {
-    member: &'static MemberType,
-    ctx: TypeCtx,
+struct GenericArg<'r> {
+    member: &'r MemberType,
+    ctx: TypeCtx<'r>,
 }
 
 /// The context for reading a type's fields: the resolution it lives in, plus
@@ -57,13 +54,13 @@ struct GenericArg {
 /// `Base<T>` reached from `Derived<float>` binds `T` to `float` read in the
 /// `Derived` site, not to the open parameter.
 #[derive(Clone)]
-struct TypeCtx {
-    res: &'static Resolution<'static>,
-    args: Rc<[GenericArg]>,
+struct TypeCtx<'r> {
+    res: &'r Resolution<'r>,
+    args: Rc<[GenericArg<'r>]>,
 }
 
-impl TypeCtx {
-    fn root(res: &'static Resolution<'static>) -> Self {
+impl<'r> TypeCtx<'r> {
+    fn root(res: &'r Resolution<'r>) -> Self {
         TypeCtx {
             res,
             args: Rc::from([]),
@@ -72,14 +69,14 @@ impl TypeCtx {
 }
 
 /// A resolved type together with the context (arguments) to read it with.
-struct ResolvedType {
-    res: &'static Resolution<'static>,
-    def: &'static TypeDefinition<'static>,
-    ctx: TypeCtx,
+struct ResolvedType<'r> {
+    res: &'r Resolution<'r>,
+    def: &'r TypeDefinition<'r>,
+    ctx: TypeCtx<'r>,
 }
 
-impl ResolvedType {
-    fn ctx(&self) -> TypeCtx {
+impl<'r> ResolvedType<'r> {
+    fn ctx(&self) -> TypeCtx<'r> {
         self.ctx.clone()
     }
 }
@@ -88,7 +85,7 @@ impl ResolvedType {
 /// `ctx`, recursively — the argument is returned with its own context so a
 /// substituted type that is itself open resolves further. Non-parameter member
 /// types pass through unchanged.
-fn effective(member: &'static MemberType, ctx: &TypeCtx) -> (&'static MemberType, TypeCtx) {
+fn effective<'r>(member: &'r MemberType, ctx: &TypeCtx<'r>) -> (&'r MemberType, TypeCtx<'r>) {
     if let MemberType::TypeGeneric(n) = member
         && let Some(arg) = ctx.args.get(*n)
     {
@@ -125,7 +122,7 @@ impl<'r> Generator<'r> {
     /// that resolves but has no serialized fields (`Some(empty)`).
     pub(crate) fn read(
         &mut self,
-        primary: &'static Resolution<'static>,
+        primary: &'r Resolution<'r>,
         namespace: &str,
         type_name: &str,
     ) -> Result<Option<Vec<TemplateField>>, io::Error> {
@@ -149,8 +146,8 @@ impl<'r> Generator<'r> {
 
     fn recursive_type_load(
         &mut self,
-        ctx: &TypeCtx,
-        def: &'static TypeDefinition<'static>,
+        ctx: &TypeCtx<'r>,
+        def: &'r TypeDefinition<'r>,
         out: &mut Vec<TemplateField>,
         available_depth: i32,
         is_recursive_call: bool,
@@ -171,9 +168,9 @@ impl<'r> Generator<'r> {
     /// an unresolvable base.
     fn inherited_base(
         &self,
-        ctx: &TypeCtx,
-        def: &'static TypeDefinition<'static>,
-    ) -> Result<Option<ResolvedType>, io::Error> {
+        ctx: &TypeCtx<'r>,
+        def: &'r TypeDefinition<'r>,
+    ) -> Result<Option<ResolvedType<'r>>, io::Error> {
         let Some(ts) = def.extends.as_ref() else {
             return Ok(None);
         };
@@ -185,8 +182,8 @@ impl<'r> Generator<'r> {
 
     fn read_types(
         &mut self,
-        ctx: &TypeCtx,
-        def: &'static TypeDefinition<'static>,
+        ctx: &TypeCtx<'r>,
+        def: &'r TypeDefinition<'r>,
         available_depth: i32,
     ) -> Result<Vec<TemplateField>, io::Error> {
         let mut out = Vec::new();
@@ -243,9 +240,9 @@ impl<'r> Generator<'r> {
     fn classify(
         &mut self,
         field: &Field,
-        element: &'static MemberType,
-        element_ctx: &TypeCtx,
-        field_res: &'static Resolution<'static>,
+        element: &'r MemberType,
+        element_ctx: &TypeCtx<'r>,
+        field_res: &'r Resolution<'r>,
         available_depth: i32,
     ) -> Result<FieldKind, io::Error> {
         if let Some(name) = base_primitive_name(element) {
@@ -290,7 +287,7 @@ impl<'r> Generator<'r> {
 
     fn serialized(
         &mut self,
-        rt: ResolvedType,
+        rt: ResolvedType<'r>,
         available_depth: i32,
     ) -> Result<Vec<TemplateField>, io::Error> {
         let mut out = Vec::new();
@@ -300,8 +297,8 @@ impl<'r> Generator<'r> {
 
     fn acceptable_fields(
         &self,
-        ctx: &TypeCtx,
-        def: &'static TypeDefinition<'static>,
+        ctx: &TypeCtx<'r>,
+        def: &'r TypeDefinition<'r>,
         available_depth: i32,
     ) -> Result<Vec<usize>, io::Error> {
         let mut valid = Vec::new();
@@ -354,9 +351,9 @@ impl<'r> Generator<'r> {
     fn is_valid_def(
         &self,
         field: &Field,
-        member: &'static MemberType,
-        member_ctx: &TypeCtx,
-        field_res: &'static Resolution<'static>,
+        member: &'r MemberType,
+        member_ctx: &TypeCtx<'r>,
+        field_res: &'r Resolution<'r>,
         available_depth: i32,
     ) -> Result<bool, io::Error> {
         if base_primitive_name(member).is_some() || is_string(member) {
@@ -392,9 +389,9 @@ impl<'r> Generator<'r> {
 
     fn member_is_same_type(
         &self,
-        member: &'static MemberType,
-        ctx: &TypeCtx,
-        def: &'static TypeDefinition<'static>,
+        member: &'r MemberType,
+        ctx: &TypeCtx<'r>,
+        def: &'r TypeDefinition<'r>,
     ) -> Result<bool, io::Error> {
         Ok(matches!(self.resolve_member(member, ctx)?, Some(rt) if std::ptr::eq(rt.def, def)))
     }
@@ -403,8 +400,8 @@ impl<'r> Generator<'r> {
 
     pub(crate) fn derives_from_monobehaviour(
         &self,
-        res: &'static Resolution<'static>,
-        def: &'static TypeDefinition<'static>,
+        res: &'r Resolution<'r>,
+        def: &'r TypeDefinition<'r>,
     ) -> Result<bool, io::Error> {
         if matches!(def.flags.kind, Kind::Interface) {
             return Ok(false);
@@ -427,8 +424,8 @@ impl<'r> Generator<'r> {
 
     fn derives_from_ueobject(
         &self,
-        res: &'static Resolution<'static>,
-        def: &'static TypeDefinition<'static>,
+        res: &'r Resolution<'r>,
+        def: &'r TypeDefinition<'r>,
     ) -> Result<bool, io::Error> {
         if matches!(def.flags.kind, Kind::Interface) {
             return Ok(false);
@@ -454,8 +451,8 @@ impl<'r> Generator<'r> {
 
     fn enum_underlying(
         &self,
-        res: &'static Resolution<'static>,
-        def: &'static TypeDefinition<'static>,
+        res: &'r Resolution<'r>,
+        def: &'r TypeDefinition<'r>,
     ) -> Option<String> {
         if base_full_name(res, def).as_deref() != Some("System.Enum") {
             return None;
@@ -470,9 +467,9 @@ impl<'r> Generator<'r> {
     /// with its concrete argument from `ctx` first.
     fn resolve_member(
         &self,
-        member: &'static MemberType,
-        ctx: &TypeCtx,
-    ) -> Result<Option<ResolvedType>, io::Error> {
+        member: &'r MemberType,
+        ctx: &TypeCtx<'r>,
+    ) -> Result<Option<ResolvedType<'r>>, io::Error> {
         let (member, ctx) = effective(member, ctx);
         self.resolve_concrete(member, &ctx)
     }
@@ -481,9 +478,9 @@ impl<'r> Generator<'r> {
     /// definition, carrying any generic arguments for further field resolution.
     fn resolve_concrete(
         &self,
-        member: &'static MemberType,
-        ctx: &TypeCtx,
-    ) -> Result<Option<ResolvedType>, io::Error> {
+        member: &'r MemberType,
+        ctx: &TypeCtx<'r>,
+    ) -> Result<Option<ResolvedType<'r>>, io::Error> {
         let MemberType::Base(b) = member else {
             return Ok(None);
         };
@@ -495,9 +492,9 @@ impl<'r> Generator<'r> {
 
     fn resolve_source_in(
         &self,
-        source: &'static TypeSource<MemberType>,
-        ctx: &TypeCtx,
-    ) -> Result<Option<ResolvedType>, io::Error> {
+        source: &'r TypeSource<MemberType>,
+        ctx: &TypeCtx<'r>,
+    ) -> Result<Option<ResolvedType<'r>>, io::Error> {
         let (user, parameters) = match source {
             TypeSource::User(user) => (user, [].as_slice()),
             TypeSource::Generic { base, parameters } => (base, parameters.as_slice()),
@@ -532,8 +529,8 @@ impl<'r> Generator<'r> {
     fn resolve_user(
         &self,
         user: &UserType,
-        res: &'static Resolution<'static>,
-    ) -> Result<Option<Resolved>, io::Error> {
+        res: &'r Resolution<'r>,
+    ) -> Result<Option<Resolved<'r>>, io::Error> {
         match user {
             UserType::Definition(idx) => Ok(Some((res, &res[*idx]))),
             UserType::Reference(idx) => {
@@ -571,7 +568,7 @@ impl<'r> Generator<'r> {
 
     /// Parsed resolution for `name`, via the generator's loader. `Ok(None)` if
     /// the assembly is absent; `Err` on a real load/parse failure.
-    fn resolution(&self, name: &str) -> Result<Option<&'static Resolution<'static>>, io::Error> {
+    fn resolution(&self, name: &str) -> Result<Option<&'r Resolution<'r>>, io::Error> {
         self.assemblies.resolution(name, self.loader)
     }
 
@@ -580,10 +577,10 @@ impl<'r> Generator<'r> {
     /// `UnityEngine.CoreModule`).
     fn find_type_following_forwards(
         &self,
-        res: &'static Resolution<'static>,
+        res: &'r Resolution<'r>,
         namespace: &str,
         name: &str,
-    ) -> Result<Option<Resolved>, io::Error> {
+    ) -> Result<Option<Resolved<'r>>, io::Error> {
         if let Some(def) = find_type(res, namespace, name) {
             return Ok(Some((res, def)));
         }
@@ -657,11 +654,11 @@ impl FieldKind {
     }
 }
 
-fn find_type(
-    res: &'static Resolution<'static>,
+fn find_type<'r>(
+    res: &'r Resolution<'r>,
     namespace: &str,
     type_name: &str,
-) -> Option<&'static TypeDefinition<'static>> {
+) -> Option<&'r TypeDefinition<'r>> {
     res.type_definitions.iter().find(|td| {
         // Only top-level types: a nested type carries an empty namespace and its
         // simple name in the metadata, so it would otherwise spuriously match a
@@ -674,11 +671,11 @@ fn find_type(
 }
 
 /// Find a type named `name` nested directly inside `encloser` (within `res`).
-fn find_nested_type(
-    res: &'static Resolution<'static>,
-    encloser: &'static TypeDefinition<'static>,
+fn find_nested_type<'r>(
+    res: &'r Resolution<'r>,
+    encloser: &'r TypeDefinition<'r>,
     name: &str,
-) -> Option<&'static TypeDefinition<'static>> {
+) -> Option<&'r TypeDefinition<'r>> {
     let encloser_ptr = std::ptr::from_ref(encloser);
     res.type_definitions.iter().find(|td| {
         td.name == name
