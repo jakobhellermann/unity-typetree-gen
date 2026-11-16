@@ -104,7 +104,7 @@ fn load_snapshot(version: &str, full_name: &str) -> Vec<Node> {
     let json = fs::read_to_string(&path)
         .unwrap_or_else(|e| panic!("read snapshot {path}: {e} (run `just regen`)"));
     let nodes: Vec<SnapshotNode> = serde_json::from_str(&json).unwrap();
-    nodes
+    let mut nodes: Vec<Node> = nodes
         .into_iter()
         .map(|n| Node {
             m_Type: n.m_Type,
@@ -112,7 +112,24 @@ fn load_snapshot(version: &str, full_name: &str) -> Vec<Node> {
             m_Level: n.m_Level,
             m_MetaFlag: n.m_MetaFlag,
         })
-        .collect()
+        .collect();
+    add_any_child_uses_align_bytes(&mut nodes);
+    nodes
+}
+
+fn add_any_child_uses_align_bytes(nodes: &mut [Node]) {
+    const ALIGN_BYTES: i32 = 0x4000;
+    const ANY_CHILD_USES_ALIGN_BYTES: i32 = 0x8000;
+    for i in 0..nodes.len() {
+        let level = nodes[i].m_Level;
+        let aligned_descendant = nodes[i + 1..]
+            .iter()
+            .take_while(|n| n.m_Level > level)
+            .any(|n| n.m_MetaFlag & ALIGN_BYTES != 0);
+        if aligned_descendant {
+            nodes[i].m_MetaFlag |= ANY_CHILD_USES_ALIGN_BYTES;
+        }
+    }
 }
 
 fn read_dll(path: &str) -> Vec<u8> {

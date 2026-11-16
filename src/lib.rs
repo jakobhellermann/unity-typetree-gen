@@ -14,6 +14,8 @@ use template::TemplateField;
 
 /// Align flag set on a node whose value is 4-byte aligned after writing.
 const ALIGN_FLAG: i32 = 0x4000;
+/// Set on every node with an aligned descendant
+const ANY_CHILD_USES_ALIGN_BYTES_FLAG: i32 = 0x8000;
 
 /// Wrap a script's serialized fields in the `Base` root (type = the class name)
 /// and build the [`TypeTreeNode`] tree directly.
@@ -49,6 +51,9 @@ fn build_node(field: &TemplateField) -> TypeTreeNode {
         } else {
             0
         });
+    }
+    if node.children.iter().any(|child| child.m_MetaFlag.unwrap_or(0) & (ALIGN_FLAG | ANY_CHILD_USES_ALIGN_BYTES_FLAG) != 0) {
+        node.m_MetaFlag = Some(node.m_MetaFlag.unwrap_or(0) | ANY_CHILD_USES_ALIGN_BYTES_FLAG);
     }
     node
 }
