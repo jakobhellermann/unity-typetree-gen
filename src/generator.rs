@@ -654,19 +654,25 @@ impl FieldKind {
     }
 }
 
+/// `type_name` names a nested type the way Unity does, `Outer/Inner`.
 fn find_type<'r>(
     res: &'r Resolution<'r>,
     namespace: &str,
     type_name: &str,
 ) -> Option<&'r TypeDefinition<'r>> {
-    res.type_definitions.iter().find(|td| {
+    let mut names = type_name.split('/');
+    let outer = names.next()?;
+    let outer = res.type_definitions.iter().find(|td| {
         // Only top-level types: a nested type carries an empty namespace and its
         // simple name in the metadata, so it would otherwise spuriously match a
         // top-level lookup (e.g. a MonoScript recording `Inner` with no
         // namespace) for an absent top-level type of the same name.
         td.encloser.is_none()
-            && td.name == type_name
+            && td.name == outer
             && td.namespace.as_deref().unwrap_or("") == namespace
+    })?;
+    names.try_fold(outer, |encloser, name| {
+        find_nested_type(res, encloser, name)
     })
 }
 

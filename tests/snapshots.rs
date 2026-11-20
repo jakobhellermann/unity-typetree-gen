@@ -236,6 +236,23 @@ fn nested_type_not_matched_as_top_level() {
     );
 }
 
+/// A nested type is looked up by its Unity name, `Outer/Inner`, as a
+/// `[SerializeReference]` field records it.
+#[test]
+fn nested_type_found_by_unity_name() {
+    let generator = new_generator(VERSIONS[0]);
+    let inner = generator
+        .generate(&fixture_loader, "Fixtures.dll", "Fixtures", "Outer/Inner")
+        .expect("load error")
+        .expect("Outer/Inner resolves");
+    let fields: Vec<(&str, &str)> = inner
+        .children
+        .iter()
+        .map(|field| (field.m_Type.as_str(), field.m_Name.as_str()))
+        .collect();
+    assert_eq!(fields, [("int", "x"), ("float", "y")]);
+}
+
 /// A loader resolves assembly bytes lazily by name, and only for the assemblies
 /// actually touched: generating a `Fixtures.dll` type that references no other
 /// assembly must not load the UnityEngine stubs.
