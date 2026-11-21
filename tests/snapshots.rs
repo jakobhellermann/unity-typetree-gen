@@ -454,3 +454,56 @@ fn all_snapshots_are_covered() {
         );
     }
 }
+
+/// A class held by `[SerializeReference]` fields gets no `references` registry: the data of its
+/// own references goes into the one of the object holding it.
+#[test]
+fn referenced_class_has_no_registry() {
+    let tree = new_generator("6000.0.0f1")
+        .generate(
+            &fixture_loader,
+            "Fixtures.dll",
+            "Fixtures",
+            "ReferencedHolder",
+        )
+        .unwrap()
+        .unwrap();
+    let fields: Vec<(&str, &str)> = tree
+        .children
+        .iter()
+        .map(|child| (child.m_Type.as_str(), child.m_Name.as_str()))
+        .collect();
+    assert_eq!(fields, [("managedReference", "inner"), ("int", "count")]);
+}
+
+#[test]
+fn object_header_goes_in_front_of_unity_objects() {
+    let header = TypeTreeNode {
+        m_Type: "MonoBehaviour".into(),
+        m_Name: "Base".into(),
+        children: vec![TypeTreeNode {
+            m_Type: "UInt8".into(),
+            m_Name: "m_Enabled".into(),
+            ..Default::default()
+        }],
+        ..Default::default()
+    };
+    let generator = new_generator("6000.0.0f1").with_object_header(header);
+    let names = |type_name: &str| -> Vec<String> {
+        let tree = generator
+            .generate(&fixture_loader, "Fixtures.dll", "Fixtures", type_name)
+            .unwrap()
+            .unwrap();
+        tree.children
+            .iter()
+            .map(|child| child.m_Name.clone())
+            .collect()
+    };
+
+    assert_eq!(names("CustomData"), ["m_Enabled", "amount"]);
+    assert_eq!(
+        names("ManagedRefs"),
+        ["m_Enabled", "single", "many", "references"]
+    );
+    assert_eq!(names("ReferencedHolder"), ["inner", "count"]);
+}

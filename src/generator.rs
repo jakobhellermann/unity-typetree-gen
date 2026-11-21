@@ -115,8 +115,8 @@ impl<'r> Generator<'r> {
         }
     }
 
-    /// The serialized fields of `namespace.type_name` in `primary` (the
-    /// MonoBehaviour header is added by the caller), or `None` if the type
+    /// The serialized fields of `namespace.type_name` in `primary`, and whether it gets the object
+    /// header (only asked for with `object_header`), or `None` if the type
     /// itself can't be resolved in the loaded assemblies (e.g. a MonoScript
     /// naming an editor-only or version-mismatched type) — distinct from a type
     /// that resolves but has no serialized fields (`Some(empty)`).
@@ -125,7 +125,8 @@ impl<'r> Generator<'r> {
         primary: &'r Resolution<'r>,
         namespace: &str,
         type_name: &str,
-    ) -> Result<Option<Vec<TemplateField>>, io::Error> {
+        object_header: bool,
+    ) -> Result<Option<(Vec<TemplateField>, bool)>, io::Error> {
         // A MonoScript may name a type by an assembly that only *forwards* it
         // (e.g. `UnityEngine.dll` forwards `FontAsset` to a module assembly), so
         // follow type-forwarder exports to find the real definition and read it
@@ -138,10 +139,15 @@ impl<'r> Generator<'r> {
         let mut children = Vec::new();
         let limit = serialization_limit(self.version);
         self.recursive_type_load(&TypeCtx::root(res), def, &mut children, limit, true)?;
-        if self.using_managed_reference {
+
+        // the data of [SerializeReference] fields goes into one registry at the end of the
+        // object, so a class only ever held by such a field has none of its own
+        let object = (object_header || self.using_managed_reference)
+            && self.derives_from_ueobject(res, def)?;
+        if object && self.using_managed_reference {
             children.push(managed_references_registry("references", self.version));
         }
-        Ok(Some(children))
+        Ok(Some((children, object && object_header)))
     }
 
     fn recursive_type_load(

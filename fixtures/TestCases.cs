@@ -174,6 +174,14 @@ namespace Fixtures
         [SerializeReference] public List<IPayload> many;
     }
 
+    // Held by [SerializeReference] fields only: its own references go into the host's registry.
+    [Serializable]
+    public class ReferencedHolder
+    {
+        [SerializeReference] public IPayload inner;
+        public int count;
+    }
+
     public class CustomData : ScriptableObject
     {
         public int amount;

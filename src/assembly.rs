@@ -65,6 +65,7 @@ pub struct AssemblyTypeTreeGenerator {
     /// assembly wait for the first to parse instead of all parsing it in parallel.
     locks: Mutex<HashMap<String, Arc<Mutex<()>>>>,
     unity_version: UnityVersion,
+    object_header: Option<TypeTreeNode>,
 }
 
 impl AssemblyTypeTreeGenerator {
@@ -73,7 +74,15 @@ impl AssemblyTypeTreeGenerator {
             assemblies: FrozenMap::new(),
             locks: Mutex::new(HashMap::new()),
             unity_version,
+            object_header: None,
         }
+    }
+
+    /// Puts the fields of `header`, the type tree of `MonoBehaviour`, in front of the fields of
+    /// the types deriving from `UnityEngine.Object`.
+    pub fn with_object_header(mut self, header: TypeTreeNode) -> Self {
+        self.object_header = Some(header);
+        self
     }
 
     /// Parsed resolution for `assembly_name`, loading and parsing it on first
@@ -139,9 +148,17 @@ impl AssemblyTypeTreeGenerator {
         let Some(primary) = self.resolution(assembly_name, loader)? else {
             return Ok(None);
         };
-        let children = Generator::new(self, &self.unity_version, loader)
-            .read(primary, namespace, type_name)?;
-        Ok(children.map(|children| crate::assemble(children, type_name)))
+        let Some((children, with_header)) = Generator::new(self, &self.unity_version, loader)
+            .read(primary, namespace, type_name, self.object_header.is_some())?
+        else {
+            return Ok(None);
+        };
+
+        let mut tree = crate::assemble(children, type_name);
+        if let Some(header) = self.object_header.as_ref().filter(|_| with_header) {
+            tree.children.splice(0..0, header.children.iter().cloned());
+        }
+        Ok(Some(tree))
     }
 
     /// Convenience: generate using a loader that reads `<managed_dir>/<assembly_name>`.
